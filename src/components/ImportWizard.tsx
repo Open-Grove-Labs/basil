@@ -74,29 +74,22 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
       const processed = processImportedTransactions(csvData, columnMapping)
       setParsedTransactions(processed)
       
-      // Separate duplicates
-      const duplicates = processed.filter(t => t.isDuplicate)
-      const nonDuplicates = processed.filter(t => !t.isDuplicate)
-      
-      // Automatically exclude duplicates - they won't be imported
-      // Initialize selectedTransactions to exclude all duplicates by default
-      setSelectedTransactions(new Set()) // Empty set means no duplicates selected
-      
-      // Always proceed to bulk edit, skipping duplicates step entirely
-      // Group for bulk editing
-      const groups = groupTransactionsByDescription(nonDuplicates)
+      // Group ALL transactions for bulk editing (including duplicates)
+      const groups = groupTransactionsByDescription(processed)
       
       // Get transactions that weren't grouped (single transactions)
       const groupedTransactionIds = new Set(
         groups.flatMap(group => group.transactions.map(t => t.id))
       )
-      const ungrouped = nonDuplicates.filter(t => !groupedTransactionIds.has(t.id))
+      const ungrouped = processed.filter(t => !groupedTransactionIds.has(t.id))
       
       setTransactionGroups(groups)
       setUngroupedTransactions(ungrouped)
       
-      // Initialize selectedTransactions to include all ungrouped transactions by default
-      setSelectedTransactions(new Set(ungrouped.map(t => t.id)))
+      // Initialize selectedTransactions to include all non-duplicates by default
+      // Duplicates are unchecked by default but still visible
+      const nonDuplicateIds = processed.filter(t => !t.isDuplicate).map(t => t.id)
+      setSelectedTransactions(new Set(nonDuplicateIds))
       
       // Go directly to bulk edit, duplicates are automatically excluded
       setCurrentStep('bulk-edit')
@@ -146,6 +139,21 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
 
     if (updates.includeInImport !== undefined) {
       group.includeInImport = updates.includeInImport
+      
+      // Update selectedTransactions to reflect group inclusion
+      const newSelected = new Set(selectedTransactions)
+      group.transactions.forEach(t => {
+        if (updates.includeInImport) {
+          // Only auto-select non-duplicates when including the group
+          if (!t.isDuplicate) {
+            newSelected.add(t.id)
+          }
+        } else {
+          // Remove all transactions from the group when excluding
+          newSelected.delete(t.id)
+        }
+      })
+      setSelectedTransactions(newSelected)
     }
     
     setTransactionGroups(updatedGroups)
@@ -531,13 +539,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
       <div className="step-header">
         <Edit3 size={32} className="step-icon" />
         <h3>Bulk Edit Transactions</h3>
-        <p>Group similar transactions and assign categories in bulk</p>
-        {parsedTransactions.filter(t => t.isDuplicate).length > 0 && (
-          <div className="duplicate-notice">
-            <AlertCircle size={16} />
-            {parsedTransactions.filter(t => t.isDuplicate).length} duplicate transactions were automatically excluded
-          </div>
-        )}
+        <p>Group similar transactions and assign categories in bulk. Duplicate transactions are unchecked by default.</p>
       </div>
       
       <div className="bulk-edit-content">
@@ -554,7 +556,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                     <label className="checkbox-label">
                       <input
                         type="checkbox"
-                        checked={group.includeInImport !== false}
+                        checked={group.transactions.some(t => selectedTransactions.has(t.id))}
                         onChange={(e) => updateTransactionGroup(groupIndex, { includeInImport: e.target.checked })}
                       />
                       <div className="group-title-section">
@@ -647,6 +649,9 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                       <span className="description">{transaction.description}</span>
                       <span className="amount">${transaction.amount.toFixed(2)}</span>
                       <span className="date">{transaction.date}</span>
+                      {transaction.isDuplicate && (
+                        <span className="duplicate-badge">Duplicate</span>
+                      )}
                     </div>
                   ))}
                   {group.transactions.length > 3 && (
@@ -687,6 +692,9 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                       <div className="group-title-section">
                         <h4>{transaction.description}</h4>
                         <span className="group-count">${transaction.amount.toFixed(2)} on {transaction.date}</span>
+                        {transaction.isDuplicate && (
+                          <span className="duplicate-badge">Duplicate</span>
+                        )}
                       </div>
                     </label>
                   </div>

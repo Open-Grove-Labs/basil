@@ -2617,6 +2617,9 @@ legend.form-label {
 .group-count {
   font-size: 0.8125rem;
   color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .group-controls {
@@ -2673,6 +2676,20 @@ legend.form-label {
 
 .group-transaction .date {
   color: var(--color-text-secondary);
+}
+
+.duplicate-badge {
+  display: inline-block;
+  padding: 0.125rem 0.375rem;
+  background: var(--color-warning-light, #fef3c7);
+  color: var(--color-warning-dark, #92400e);
+  border: 1px solid var(--color-warning, #f59e0b);
+  border-radius: 8px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
 }
 
 .more-transactions {
