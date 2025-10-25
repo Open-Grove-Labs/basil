@@ -11,7 +11,7 @@ export interface ParsedTransaction {
   description: string
   amount: number
   category?: string
-  type?: 'income' | 'expense' | 'savings'
+  type?: 'income' | 'expense'
   isDuplicate?: boolean
   duplicateReason?: string
   confidence: number
@@ -40,7 +40,7 @@ export interface TransactionGroup {
   description: string
   transactions: ParsedTransaction[]
   suggestedCategory?: string
-  suggestedType?: 'income' | 'expense' | 'savings'
+  suggestedType?: 'income' | 'expense'
   includeInImport?: boolean
 }
 
@@ -322,7 +322,7 @@ export function parseAmount(amountStr: string): number {
   return (isNegativeParens || String(amountStr).trim().startsWith('-')) ? -Math.abs(amount) : amount
 }
 
-export function determineTransactionType(description: string, typeColumn?: string, isDebit?: boolean): 'income' | 'expense' | 'savings' {
+export function determineTransactionType(description: string, typeColumn?: string, isDebit?: boolean): 'income' | 'expense' {
   // If we have explicit type column data
   if (typeColumn) {
     const type = typeColumn.toLowerCase()
@@ -334,14 +334,8 @@ export function determineTransactionType(description: string, typeColumn?: strin
     }
   }
   
-  // Check description for savings indicators
-  const desc = description.toLowerCase()
-  const savingsKeywords = ['transfer to savings', 'savings deposit', '401k', 'retirement', 'investment', 'ira']
-  if (savingsKeywords.some(keyword => desc.includes(keyword))) {
-    return 'savings'
-  }
-  
   // Check description for income indicators
+  const desc = description.toLowerCase()
   const incomeKeywords = ['salary', 'paycheck', 'wage', 'bonus', 'refund', 'deposit', 'interest', 'dividend', 'freelance']
   if (incomeKeywords.some(keyword => desc.includes(keyword))) {
     return 'income'
@@ -578,11 +572,11 @@ function normalizeDescription(description: string): string {
     .trim()
 }
 
-function getMostCommonType(transactions: ParsedTransaction[]): 'income' | 'expense' | 'savings' {
-  const typeCounts = { income: 0, expense: 0, savings: 0 }
+function getMostCommonType(transactions: ParsedTransaction[]): 'income' | 'expense' {
+  const typeCounts = { income: 0, expense: 0 }
   transactions.forEach(t => typeCounts[t.type || 'expense']++)
   
   return Object.entries(typeCounts).reduce((a, b) => 
     typeCounts[a[0] as keyof typeof typeCounts] > typeCounts[b[0] as keyof typeof typeCounts] ? a : b
-  )[0] as 'income' | 'expense' | 'savings'
+  )[0] as 'income' | 'expense'
 }

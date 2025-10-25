@@ -46,10 +46,6 @@ const DEFAULT_CATEGORIES: Category[] = [
   { id: '14', name: 'Salary', color: '#5F27CD', type: 'income' },
   { id: '15', name: 'Freelance', color: '#00D2D3', type: 'income' },
   { id: '16', name: 'Investments', color: '#FF9F43', type: 'income' },
-  { id: '18', name: 'Emergency Fund', color: '#10B981', type: 'savings' },
-  { id: '19', name: 'Retirement', color: '#059669', type: 'savings' },
-  { id: '20', name: 'Vacation Fund', color: '#34D399', type: 'savings' },
-  { id: '21', name: 'House Deposit', color: '#6EE7B7', type: 'savings' },
 ];
 
 // Generic storage functions
@@ -143,7 +139,7 @@ export function addCategory(category: Omit<Category, 'id'>): Category {
   return newCategory;
 }
 
-export function getCategoriesByUsage(type?: 'income' | 'expense' | 'savings'): Category[] {
+export function getCategoriesByUsage(type?: 'income' | 'expense'): Category[] {
   const categories = loadCategories();
   const transactions = loadTransactions();
   

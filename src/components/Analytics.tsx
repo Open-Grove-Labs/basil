@@ -134,7 +134,6 @@ function Analytics() {
 
     // Calculate monthly trends with cumulative net balance
     const trends: SpendingTrend[] = [];
-    let cumulativeSavings = 0;
     let cumulativeBalance = 0;
     
     for (let i = months - 1; i >= 0; i--) {
@@ -153,21 +152,15 @@ function Analytics() {
         .filter((t) => t.type === "expense")
         .reduce((sum, t) => sum + t.amount, 0);
 
-      const monthSavings = monthTransactions
-        .filter((t) => t.type === "savings")
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      const monthBalance = monthIncome - monthExpenses - monthSavings;
+      const monthBalance = monthIncome - monthExpenses;
       
-      // Add this month's savings and net balance to the cumulative totals
-      cumulativeSavings += monthSavings;
+      // Add this month's net balance to the cumulative total
       cumulativeBalance += monthBalance;
       
       trends.push({
         date: format(monthStart, "MMM yyyy"),
         income: monthIncome,
         expenses: monthExpenses,
-        savings: cumulativeSavings, // Show cumulative savings total
         balance: monthBalance,
         cumulativeBalance: cumulativeBalance, // Show cumulative net balance - the key metric!
         isProjection: false,
@@ -222,21 +215,6 @@ function Analytics() {
       const avgIncome = recentTrends.reduce((sum, t) => sum + (t.income || 0), 0) / recentTrends.length;
       const avgExpenses = recentTrends.reduce((sum, t) => sum + (t.expenses || 0), 0) / recentTrends.length;
       
-      // For savings, we need to calculate the average monthly savings amount, not cumulative
-      let avgMonthlySavings = 0;
-      if (recentTrends.length > 1) {
-        // Calculate monthly savings by taking the difference between consecutive cumulative totals
-        let monthlySavingsSum = 0;
-        for (let i = 1; i < recentTrends.length; i++) {
-          const monthlySavingsAmount = (recentTrends[i].savings || 0) - (recentTrends[i-1].savings || 0);
-          monthlySavingsSum += monthlySavingsAmount;
-        }
-        avgMonthlySavings = monthlySavingsSum / (recentTrends.length - 1);
-      } else {
-        // If only one month, use that month's cumulative as the monthly amount
-        avgMonthlySavings = recentTrends[0].savings || 0;
-      }
-      
       // Create combined historical and projected data
       const projections: SpendingTrend[] = [];
       
@@ -248,15 +226,13 @@ function Analytics() {
           projectedIncome: null,
           projectedExpenses: null,
           projectedBalance: null,
-          projectedSavings: null,
           projectedCumulativeBalance: null
         });
       });
       
       // Add bridge point (last historical point as first projection point)
       const lastTrend = trends[trends.length - 1];
-      const avgBalance = avgIncome - avgExpenses - avgMonthlySavings;
-      let projectedSavings = lastTrend.savings || 0;
+      const avgBalance = avgIncome - avgExpenses;
       let projectedCumulativeBalance = lastTrend.cumulativeBalance || 0;
       
       projections.push({
@@ -264,12 +240,10 @@ function Analytics() {
         income: null,
         expenses: null,
         balance: null,
-        savings: null,
         cumulativeBalance: null,
         projectedIncome: avgIncome,
         projectedExpenses: avgExpenses,
         projectedBalance: avgBalance,
-        projectedSavings: avgMonthlySavings,
         projectedCumulativeBalance: projectedCumulativeBalance,
         isProjection: true
       });
@@ -277,7 +251,6 @@ function Analytics() {
       // Add future projections
       for (let i = 1; i <= months; i++) {
         const futureDate = format(subMonths(now, -i), "MMM yyyy");
-        projectedSavings += avgMonthlySavings; // Accumulate savings based on average monthly savings
         projectedCumulativeBalance += avgBalance; // Accumulate net balance - this shows the financial trajectory!
         
         projections.push({
@@ -285,12 +258,10 @@ function Analytics() {
           income: null,
           expenses: null,
           balance: null,
-          savings: null,
           cumulativeBalance: null,
           projectedIncome: avgIncome,
           projectedExpenses: avgExpenses,
           projectedBalance: avgBalance,
-          projectedSavings: projectedSavings,
           projectedCumulativeBalance: projectedCumulativeBalance,
           isProjection: true
         });

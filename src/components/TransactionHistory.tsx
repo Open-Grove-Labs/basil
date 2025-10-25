@@ -11,7 +11,7 @@ function TransactionHistory() {
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
-  const [selectedType, setSelectedType] = useState<'all' | 'income' | 'expense' | 'savings'>('all')
+  const [selectedType, setSelectedType] = useState<'all' | 'income' | 'expense'>('all')
   const [selectedMonth, setSelectedMonth] = useState('')
   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
@@ -30,7 +30,7 @@ function TransactionHistory() {
     amount: '',
     description: '',
     category: '',
-    type: 'expense' as 'income' | 'expense' | 'savings',
+    type: 'expense' as 'income' | 'expense',
     date: ''
   })
   const [currency] = useState<CurrencyConfig>(() => loadSettings().currency)
@@ -265,7 +265,7 @@ function TransactionHistory() {
     loadTransactionData() // Refresh data in case of changes
   }
 
-  const updateTransactionGroup = (groupIndex: number, updates: { category?: string, type?: 'income' | 'expense' | 'savings' }) => {
+  const updateTransactionGroup = (groupIndex: number, updates: { category?: string, type?: 'income' | 'expense' }) => {
     const updatedGroups = [...transactionGroups]
     const group = updatedGroups[groupIndex]
     
@@ -295,7 +295,7 @@ function TransactionHistory() {
     }
   }
 
-  const updateIndividualTransaction = (transactionId: string, updates: { category?: string, type?: 'income' | 'expense' | 'savings' }) => {
+  const updateIndividualTransaction = (transactionId: string, updates: { category?: string, type?: 'income' | 'expense' }) => {
     updateTransaction(transactionId, updates)
     
     // Update local state
@@ -331,7 +331,7 @@ function TransactionHistory() {
     })
   }
 
-  const handleAddNewCategory = (groupIndex: number, type: 'income' | 'expense' | 'savings') => {
+  const handleAddNewCategory = (groupIndex: number, type: 'income' | 'expense') => {
     const categoryName = newCategoryNames.get(groupIndex)?.trim()
     if (!categoryName) return
 
@@ -368,9 +368,7 @@ function TransactionHistory() {
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + t.amount, 0)
   
-  const totalSavings = filteredTransactions
-    .filter(t => t.type === 'savings')
-    .reduce((sum, t) => sum + t.amount, 0)
+
 
   return (
     <div className="page-content">
@@ -414,13 +412,12 @@ function TransactionHistory() {
             <select
               className="form-select"
               value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value as 'all' | 'income' | 'expense' | 'savings')}
+              onChange={(e) => setSelectedType(e.target.value as 'all' | 'income' | 'expense')}
               aria-label="Filter by transaction type"
             >
               <option value="all">All Types</option>
               <option value="income">Income</option>
               <option value="expense">Expense</option>
-              <option value="savings">Savings</option>
             </select>
           </div>
 
@@ -469,17 +466,13 @@ function TransactionHistory() {
                 <span className="summary-label">Income:</span>
                 <span className="summary-value">{formatCurrency(totalIncome)}</span>
               </div>
-              <div className="summary-item expense">
+              <div className="summary-item expenses">
                 <span className="summary-label">Expenses:</span>
                 <span className="summary-value">{formatCurrency(totalExpenses)}</span>
               </div>
-              <div className="summary-item savings">
-                <span className="summary-label">Savings:</span>
-                <span className="summary-value">{formatCurrency(totalSavings)}</span>
-              </div>
               <div className="summary-item balance">
                 <span className="summary-label">Net:</span>
-                <span className="summary-value">{formatCurrency(totalIncome - totalExpenses - totalSavings)}</span>
+                <span className="summary-value">{formatCurrency(totalIncome - totalExpenses)}</span>
               </div>
             </div>
           )}
@@ -542,17 +535,15 @@ function TransactionHistory() {
                       </div>
                       
                       <div className="group-controls">
-                        <select
-                          className="form-select"
+                        <select 
                           value={group.suggestedType || 'expense'}
                           onChange={(e) => updateTransactionGroup(groupIndex, { 
-                            type: e.target.value as 'income' | 'expense' | 'savings' 
+                            type: e.target.value as 'income' | 'expense' 
                           })}
                           aria-label="Transaction type"
                         >
                           <option value="expense">Expense</option>
                           <option value="income">Income</option>
-                          <option value="savings">Savings</option>
                         </select>
                         
                         {!showNewCategoryInputs.get(groupIndex) ? (
@@ -657,13 +648,12 @@ function TransactionHistory() {
                           className="form-select"
                           value={transaction.type || 'expense'}
                           onChange={(e) => updateIndividualTransaction(transaction.id, { 
-                            type: e.target.value as 'income' | 'expense' | 'savings' 
+                            type: e.target.value as 'income' | 'expense' 
                           })}
                           aria-label="Transaction type"
                         >
                           <option value="expense">Expense</option>
                           <option value="income">Income</option>
-                          <option value="savings">Savings</option>
                         </select>
                         
                         <select

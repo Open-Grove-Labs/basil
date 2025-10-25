@@ -69,18 +69,7 @@ const INCOME_TEMPLATES = [
   { description: 'Bonus Payment', category: 'Salary', minAmount: 800, maxAmount: 3000 },
 ];
 
-const SAVINGS_TEMPLATES = [
-  { description: 'Emergency Fund Contribution', category: 'Emergency Fund', minAmount: 300, maxAmount: 1000 },
-  { description: 'Retirement 401k Contribution', category: 'Retirement', minAmount: 500, maxAmount: 1500 },
-  { description: 'Vacation Fund Deposit', category: 'Vacation Fund', minAmount: 150, maxAmount: 600 },
-  { description: 'House Down Payment Savings', category: 'House Deposit', minAmount: 400, maxAmount: 1200 },
-  { description: 'Investment Account Transfer', category: 'Retirement', minAmount: 300, maxAmount: 900 },
-  { description: 'College Fund Contribution', category: 'Education', minAmount: 200, maxAmount: 700 },
-  { description: 'High-Yield Savings Account', category: 'Emergency Fund', minAmount: 250, maxAmount: 800 },
-  { description: 'Stock Portfolio Contribution', category: 'Investments', minAmount: 400, maxAmount: 1100 },
-  { description: 'Roth IRA Contribution', category: 'Retirement', minAmount: 350, maxAmount: 1000 },
-  { description: 'Car Replacement Fund', category: 'Transportation', minAmount: 200, maxAmount: 600 },
-];
+
 
 // Helper function to get local date string (YYYY-MM-DD)
 function getLocalDateString(date: Date): string {
@@ -138,25 +127,6 @@ function generateMockTransactions(): Transaction[] {
       });
     }
     
-    // Generate savings transactions (90% chance, 2-4 per month for better baseline)
-    if (Math.random() > 0.1) {
-      const savingsCount = Math.floor(Math.random() * 3) + 2; // 2-4 savings per month
-      for (let i = 0; i < savingsCount; i++) {
-        const template = SAVINGS_TEMPLATES[Math.floor(Math.random() * SAVINGS_TEMPLATES.length)];
-        const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), Math.floor(Math.random() * 28) + 1);
-        
-        transactions.push({
-          id: crypto.randomUUID(),
-          amount: randomAmount(template.minAmount, template.maxAmount),
-          description: template.description,
-          category: template.category,
-          type: 'savings',
-          date: getLocalDateString(date),
-          createdAt: date.toISOString(),
-        });
-      }
-    }
-    
     // Generate 25-45 expenses per month
     const expenseCount = Math.floor(Math.random() * 21) + 25;
     for (let i = 0; i < expenseCount; i++) {
@@ -201,7 +171,6 @@ export function loadMockData(): void {
   console.log('   • Monthly salary payments');
   console.log('   • Varied expense categories');
   console.log('   • Random freelance income');
-  console.log('   • Savings contributions');
   console.log('   • Realistic spending patterns');
   console.log('');
   console.log('💡 To remove mock data, run: localStorage.removeItem("basil.addMockData")');

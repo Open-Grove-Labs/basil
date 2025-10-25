@@ -3,7 +3,7 @@ export interface Transaction {
   amount: number;
   description: string;
   category: string;
-  type: 'income' | 'expense' | 'savings';
+  type: 'income' | 'expense';
   date: string; // ISO string format
   createdAt: string;
 }
@@ -12,7 +12,7 @@ export interface Category {
   id: string;
   name: string;
   color: string;
-  type: 'income' | 'expense' | 'savings';
+  type: 'income' | 'expense';
 }
 
 export interface Budget {
@@ -25,11 +25,9 @@ export interface Budget {
 export interface BudgetSummary {
   totalIncome: number;
   totalExpenses: number;
-  totalSavings: number;
   balance: number;
   monthlyIncome: number;
   monthlyExpenses: number;
-  monthlySavings: number;
   topCategories: {
     category: string;
     amount: number;
@@ -42,13 +40,11 @@ export interface SpendingTrend {
   income: number | null;
   expenses: number | null;
   balance: number | null;
-  savings: number | null;
   cumulativeBalance: number | null;
   isProjection?: boolean;
   projectedIncome?: number | null;
   projectedExpenses?: number | null;
   projectedBalance?: number | null;
-  projectedSavings?: number | null;
   projectedCumulativeBalance?: number | null;
 }
 

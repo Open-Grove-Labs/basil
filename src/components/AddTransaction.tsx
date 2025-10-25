@@ -22,7 +22,7 @@ function AddTransaction({ onSuccess }: AddTransactionProps) {
     amount: '',
     description: '',
     category: '',
-    type: 'expense' as 'income' | 'expense' | 'savings',
+    type: 'expense' as 'income' | 'expense',
     date: getTodayLocalDate() // Today's date in local timezone YYYY-MM-DD format
   })
   const [categories, setCategories] = useState<Category[]>([])
@@ -54,7 +54,7 @@ function AddTransaction({ onSuccess }: AddTransactionProps) {
     amount: '',
     description: '',
     category: '',
-    type: 'expense' as 'income' | 'expense' | 'savings',
+    type: 'expense' as 'income' | 'expense',
     date: ''
   })
   const [allCategories, setAllCategories] = useState<Category[]>([])
@@ -486,7 +486,7 @@ function AddTransaction({ onSuccess }: AddTransactionProps) {
               role="radiogroup" 
               aria-labelledby="transaction-type-legend"
               onKeyDown={(e) => {
-                const types = ['expense', 'income', 'savings'] as const
+                const types = ['expense', 'income'] as const
                 const currentIndex = types.indexOf(formData.type)
                 
                 if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
@@ -522,17 +522,7 @@ function AddTransaction({ onSuccess }: AddTransactionProps) {
               >
                 Income
               </button>
-              <button
-                type="button"
-                className={`type-button ${formData.type === 'savings' ? 'active savings' : ''}`}
-                onClick={() => handleInputChange('type', 'savings')}
-                role="radio"
-                aria-checked={formData.type === 'savings'}
-                aria-label="Savings - Money saved"
-                tabIndex={formData.type === 'savings' ? 0 : -1}
-              >
-                Savings
-              </button>
+
             </div>
           </fieldset>
 
@@ -756,7 +746,6 @@ function AddTransaction({ onSuccess }: AddTransactionProps) {
                         >
                           <option value="expense">Expense</option>
                           <option value="income">Income</option>
-                          <option value="savings">Savings</option>
                         </select>
                       </div>
                       

@@ -127,7 +127,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
   }
 
   // Step 4: Bulk Edit
-  const updateTransactionGroup = (groupIndex: number, updates: { category?: string, type?: 'income' | 'expense' | 'savings', includeInImport?: boolean }) => {
+  const updateTransactionGroup = (groupIndex: number, updates: { category?: string, type?: 'income' | 'expense', includeInImport?: boolean }) => {
     const updatedGroups = [...transactionGroups]
     const group = updatedGroups[groupIndex]
     
@@ -168,7 +168,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
   }
 
   // Helper functions for new category management
-  const handleAddNewCategory = (groupIndex: number, type: 'income' | 'expense' | 'savings') => {
+  const handleAddNewCategory = (groupIndex: number, type: 'income' | 'expense') => {
     const categoryName = newCategoryNames.get(groupIndex)?.trim()
     if (!categoryName) return
 
@@ -225,7 +225,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
   }
 
   // Helper function to update individual ungrouped transactions
-  const updateUngroupedTransaction = (transactionId: string, updates: { category?: string, type?: 'income' | 'expense' | 'savings' }) => {
+  const updateUngroupedTransaction = (transactionId: string, updates: { category?: string, type?: 'income' | 'expense' }) => {
     setUngroupedTransactions(prev => 
       prev.map(t => 
         t.id === transactionId 
@@ -580,13 +580,12 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                         className="form-select"
                         value={group.suggestedType || 'expense'}
                         onChange={(e) => updateTransactionGroup(groupIndex, { 
-                          type: e.target.value as 'income' | 'expense' | 'savings' 
+                          type: e.target.value as 'income' | 'expense' 
                         })}
                         aria-label="Transaction type"
                       >
                         <option value="expense">Expense</option>
                         <option value="income">Income</option>
-                        <option value="savings">Savings</option>
                       </select>
                       
                       {!showNewCategoryInputs.get(groupIndex) ? (
@@ -713,13 +712,12 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                       className="form-select"
                       value={transaction.type || 'expense'}
                       onChange={(e) => updateUngroupedTransaction(transaction.id, { 
-                        type: e.target.value as 'income' | 'expense' | 'savings' 
+                        type: e.target.value as 'income' | 'expense' 
                       })}
                       aria-label="Transaction type"
                     >
                       <option value="expense">Expense</option>
                       <option value="income">Income</option>
-                      <option value="savings">Savings</option>
                     </select>
                     
                     <select
