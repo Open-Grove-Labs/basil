@@ -765,6 +765,126 @@ legend.form-label {
   color: var(--color-expense);
 }
 
+/* Monthly Overview Cards */
+.monthly-overview {
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+.month-card {
+  padding: 1.5rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.month-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px var(--shadow-heavy);
+}
+
+.month-card.current-month {
+  border: 2px solid var(--color-primary);
+  background: var(--color-surface-elevated);
+}
+
+.month-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.month-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.month-balance {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.month-balance .positive {
+  color: var(--color-income);
+}
+
+.month-balance .negative {
+  color: var(--color-expense);
+}
+
+.month-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.month-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.month-item-icon {
+  padding: 0.5rem;
+  border-radius: 8px;
+  color: var(--color-text-inverse);
+  flex-shrink: 0;
+}
+
+.month-item-icon.income {
+  background: var(--color-income);
+}
+
+.month-item-icon.expense {
+  background: var(--color-expense);
+}
+
+.month-item-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.month-item-label {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.month-item-amount {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.month-item-amount.positive {
+  color: var(--color-income);
+}
+
+.month-item-amount.negative {
+  color: var(--color-expense);
+}
+
+.month-item-change {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.month-item-change.positive {
+  color: var(--color-income);
+}
+
+.month-item-change.negative {
+  color: var(--color-expense);
+}
+
 /* Category Comparison */
 .category-comparison {
   display: flex;
@@ -818,7 +938,7 @@ legend.form-label {
 
 .amount-current,
 .amount-last,
-.amount-third {
+.amount-second-last {
   text-align: center;
   min-width: 80px;
 }
@@ -842,7 +962,7 @@ legend.form-label {
   color: var(--color-text-secondary);
 }
 
-.amount-value.third {
+.amount-value.second-last {
   color: var(--color-text-muted);
 }
 
@@ -1628,6 +1748,25 @@ legend.form-label {
     grid-template-columns: 1fr;
   }
   
+  .month-card {
+    padding: 1rem;
+  }
+  
+  .month-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .month-item {
+    gap: 0.5rem;
+  }
+  
+  .month-item-amount {
+    font-size: 1rem;
+  }
+  
   .filters-grid {
     grid-template-columns: 1fr;
   }
@@ -1698,7 +1837,7 @@ legend.form-label {
   
   .amount-current,
   .amount-last,
-  .amount-third {
+  .amount-second-last {
     min-width: 70px;
   }
   

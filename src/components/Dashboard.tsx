@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { TrendingUp, TrendingDown, PiggyBank } from 'lucide-react'
+import { TrendingUp, TrendingDown } from 'lucide-react'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { loadTransactions, loadCategories, parseLocalDate, formatCurrency } from '../utils/storage'
 import type { Transaction } from '../types'
@@ -7,7 +7,6 @@ import type { Transaction } from '../types'
 interface MonthlyData {
   income: number
   expenses: number
-  savings: number
   balance: number
   categoryTotals: Array<{
     category: string
@@ -19,20 +18,20 @@ interface MonthlyData {
 interface DashboardSummary {
   currentMonth: MonthlyData
   lastMonth: MonthlyData
-  thirdMonth: MonthlyData
+  secondLastMonth: MonthlyData
   currentMonthName: string
   lastMonthName: string
-  thirdMonthName: string
+  secondLastMonthName: string
 }
 
 function Dashboard() {
   const [summary, setSummary] = useState<DashboardSummary>({
-    currentMonth: { income: 0, expenses: 0, savings: 0, balance: 0, categoryTotals: [] },
-    lastMonth: { income: 0, expenses: 0, savings: 0, balance: 0, categoryTotals: [] },
-    thirdMonth: { income: 0, expenses: 0, savings: 0, balance: 0, categoryTotals: [] },
+    currentMonth: { income: 0, expenses: 0, balance: 0, categoryTotals: [] },
+    lastMonth: { income: 0, expenses: 0, balance: 0, categoryTotals: [] },
+    secondLastMonth: { income: 0, expenses: 0, balance: 0, categoryTotals: [] },
     currentMonthName: '',
     lastMonthName: '',
-    thirdMonthName: ''
+    secondLastMonthName: ''
   })
 
   useEffect(() => {
@@ -51,9 +50,9 @@ function Dashboard() {
     const lastMonthStart = startOfMonth(lastMonthDate)
     const lastMonthEnd = endOfMonth(lastMonthDate)
     
-    const thirdMonthDate = subMonths(now, 2)
-    const thirdMonthStart = startOfMonth(thirdMonthDate)
-    const thirdMonthEnd = endOfMonth(thirdMonthDate)
+    const secondLastMonthDate = subMonths(now, 2)
+    const secondLastMonthStart = startOfMonth(secondLastMonthDate)
+    const secondLastMonthEnd = endOfMonth(secondLastMonthDate)
     
     // Filter transactions by month
     const currentMonthTransactions = transactions.filter(t => {
@@ -66,9 +65,9 @@ function Dashboard() {
       return transactionDate >= lastMonthStart && transactionDate <= lastMonthEnd
     })
     
-    const thirdMonthTransactions = transactions.filter(t => {
+    const secondLastMonthTransactions = transactions.filter(t => {
       const transactionDate = parseLocalDate(t.date)
-      return transactionDate >= thirdMonthStart && transactionDate <= thirdMonthEnd
+      return transactionDate >= secondLastMonthStart && transactionDate <= secondLastMonthEnd
     })
     
     // Calculate current month data
@@ -80,10 +79,6 @@ function Dashboard() {
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0)
     
-    const currentMonthSavings = currentMonthTransactions
-      .filter(t => t.type === 'savings')
-      .reduce((sum, t) => sum + t.amount, 0)
-    
     // Calculate last month data
     const lastMonthIncome = lastMonthTransactions
       .filter(t => t.type === 'income')
@@ -93,21 +88,13 @@ function Dashboard() {
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0)
     
-    const lastMonthSavings = lastMonthTransactions
-      .filter(t => t.type === 'savings')
-      .reduce((sum, t) => sum + t.amount, 0)
-    
-    // Calculate third month data
-    const thirdMonthIncome = thirdMonthTransactions
+    // Calculate second last month data
+    const secondLastMonthIncome = secondLastMonthTransactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0)
     
-    const thirdMonthExpenses = thirdMonthTransactions
+    const secondLastMonthExpenses = secondLastMonthTransactions
       .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0)
-    
-    const thirdMonthSavings = thirdMonthTransactions
-      .filter(t => t.type === 'savings')
       .reduce((sum, t) => sum + t.amount, 0)
     
     // Calculate category totals for current month
@@ -128,20 +115,20 @@ function Dashboard() {
         lastCategoryTotals.set(t.category, current + t.amount)
       })
     
-    // Calculate category totals for third month
-    const thirdCategoryTotals = new Map<string, number>()
-    thirdMonthTransactions
+    // Calculate category totals for second last month
+    const secondLastCategoryTotals = new Map<string, number>()
+    secondLastMonthTransactions
       .filter(t => t.type === 'expense')
       .forEach(t => {
-        const current = thirdCategoryTotals.get(t.category) || 0
-        thirdCategoryTotals.set(t.category, current + t.amount)
+        const current = secondLastCategoryTotals.get(t.category) || 0
+        secondLastCategoryTotals.set(t.category, current + t.amount)
       })
     
     // Get all unique categories from all three months
     const allCategories = new Set([
       ...Array.from(currentCategoryTotals.keys()),
       ...Array.from(lastCategoryTotals.keys()),
-      ...Array.from(thirdCategoryTotals.keys())
+      ...Array.from(secondLastCategoryTotals.keys())
     ])
     
     const currentCategoriesData = Array.from(allCategories)
@@ -166,12 +153,12 @@ function Dashboard() {
       })
       .sort((a, b) => b.amount - a.amount)
     
-    const thirdCategoriesData = Array.from(allCategories)
+    const secondLastCategoriesData = Array.from(allCategories)
       .map(categoryName => {
         const category = categories.find(c => c.name === categoryName)
         return {
           category: categoryName,
-          amount: thirdCategoryTotals.get(categoryName) || 0,
+          amount: secondLastCategoryTotals.get(categoryName) || 0,
           color: category?.color || '#667eea'
         }
       })
@@ -181,27 +168,24 @@ function Dashboard() {
       currentMonth: {
         income: currentMonthIncome,
         expenses: currentMonthExpenses,
-        savings: currentMonthSavings,
-        balance: currentMonthIncome - currentMonthExpenses - currentMonthSavings,
+        balance: currentMonthIncome - currentMonthExpenses,
         categoryTotals: currentCategoriesData
       },
       lastMonth: {
         income: lastMonthIncome,
         expenses: lastMonthExpenses,
-        savings: lastMonthSavings,
-        balance: lastMonthIncome - lastMonthExpenses - lastMonthSavings,
+        balance: lastMonthIncome - lastMonthExpenses,
         categoryTotals: lastCategoriesData
       },
-      thirdMonth: {
-        income: thirdMonthIncome,
-        expenses: thirdMonthExpenses,
-        savings: thirdMonthSavings,
-        balance: thirdMonthIncome - thirdMonthExpenses - thirdMonthSavings,
-        categoryTotals: thirdCategoriesData
+      secondLastMonth: {
+        income: secondLastMonthIncome,
+        expenses: secondLastMonthExpenses,
+        balance: secondLastMonthIncome - secondLastMonthExpenses,
+        categoryTotals: secondLastCategoriesData
       },
       currentMonthName: format(now, 'MMMM yyyy'),
       lastMonthName: format(lastMonthDate, 'MMMM yyyy'),
-      thirdMonthName: format(thirdMonthDate, 'MMMM yyyy')
+      secondLastMonthName: format(secondLastMonthDate, 'MMMM yyyy')
     })
   }
 
@@ -226,112 +210,121 @@ function Dashboard() {
 
   return (
     <div className="page-content">
-      {/* Monthly Comparison Cards */}
-      <section aria-labelledby="monthly-summary" className="grid grid-4 summary-grid">
-        <h2 id="monthly-summary" className="sr-only">Monthly Financial Summary</h2>
-        <div className="card">
-          <div className="summary-card">
-            <div className="summary-icon income">
-              <TrendingUp size={20} />
+      {/* Monthly Overview */}
+      <section aria-labelledby="monthly-overview" className="grid grid-3 monthly-overview">
+        <h2 id="monthly-overview" className="sr-only">Monthly Financial Overview</h2>
+        
+        {/* Second Last Month */}
+        <div className="card month-card">
+          <div className="month-header">
+            <h3>{summary.secondLastMonthName}</h3>
+            <div className="month-balance">
+              Net: <span className={summary.secondLastMonth.balance >= 0 ? 'positive' : 'negative'}>
+                {formatCurrency(summary.secondLastMonth.balance)}
+              </span>
             </div>
-            <div className="summary-details">
-              <div className="summary-label">
-                {summary.currentMonthName} Income
+          </div>
+          <div className="month-details">
+            <div className="month-item">
+              <div className="month-item-icon income">
+                <TrendingUp size={16} />
               </div>
-              <div className="summary-amount positive">
-                {formatCurrency(summary.currentMonth.income)}
+              <div className="month-item-details">
+                <div className="month-item-label">Income</div>
+                <div className="month-item-amount">
+                  {formatCurrency(summary.secondLastMonth.income)}
+                </div>
               </div>
-              <div className={`summary-change ${getChangeColor(summary.currentMonth.income, summary.lastMonth.income)}`}>
-                {getChangeIcon(summary.currentMonth.income, summary.lastMonth.income)}
-                {Math.abs(getChangePercentage(summary.currentMonth.income, summary.lastMonth.income)).toFixed(1)}% vs {summary.lastMonthName}
+            </div>
+            <div className="month-item">
+              <div className="month-item-icon expense">
+                <TrendingDown size={16} />
+              </div>
+              <div className="month-item-details">
+                <div className="month-item-label">Expenses</div>
+                <div className="month-item-amount">
+                  {formatCurrency(summary.secondLastMonth.expenses)}
+                </div>
               </div>
             </div>
           </div>
         </div>
         
-        <div className="card">
-          <div className="summary-card">
-            <div className="summary-icon expense">
-              <TrendingDown size={20} />
+        {/* Last Month */}
+        <div className="card month-card">
+          <div className="month-header">
+            <h3>{summary.lastMonthName}</h3>
+            <div className="month-balance">
+              Net: <span className={summary.lastMonth.balance >= 0 ? 'positive' : 'negative'}>
+                {formatCurrency(summary.lastMonth.balance)}
+              </span>
             </div>
-            <div className="summary-details">
-              <div className="summary-label">
-                {summary.currentMonthName} Expenses
+          </div>
+          <div className="month-details">
+            <div className="month-item">
+              <div className="month-item-icon income">
+                <TrendingUp size={16} />
               </div>
-              <div className="summary-amount negative">
-                {formatCurrency(summary.currentMonth.expenses)}
+              <div className="month-item-details">
+                <div className="month-item-label">Income</div>
+                <div className="month-item-amount">
+                  {formatCurrency(summary.lastMonth.income)}
+                </div>
               </div>
-              <div className={`summary-change ${getChangeColor(summary.currentMonth.expenses, summary.lastMonth.expenses, true)}`}>
-                {getChangeIcon(summary.currentMonth.expenses, summary.lastMonth.expenses, true)}
-                {Math.abs(getChangePercentage(summary.currentMonth.expenses, summary.lastMonth.expenses)).toFixed(1)}% vs {summary.lastMonthName}
+            </div>
+            <div className="month-item">
+              <div className="month-item-icon expense">
+                <TrendingDown size={16} />
+              </div>
+              <div className="month-item-details">
+                <div className="month-item-label">Expenses</div>
+                <div className="month-item-amount">
+                  {formatCurrency(summary.lastMonth.expenses)}
+                </div>
               </div>
             </div>
           </div>
         </div>
         
-        <div className="card">
-          <div className="summary-card">
-            <div className="summary-icon savings">
-              <PiggyBank size={20} />
-            </div>
-            <div className="summary-details">
-              <div className="summary-label">
-                {summary.currentMonthName} Savings
-              </div>
-              <div className="summary-amount savings">
-                {formatCurrency(summary.currentMonth.savings)}
-              </div>
-              <div className={`summary-change ${getChangeColor(summary.currentMonth.savings, summary.lastMonth.savings)}`}>
-                {getChangeIcon(summary.currentMonth.savings, summary.lastMonth.savings)}
-                {Math.abs(getChangePercentage(summary.currentMonth.savings, summary.lastMonth.savings)).toFixed(1)}% vs {summary.lastMonthName}
-              </div>
+        {/* Current Month */}
+        <div className="card month-card current-month">
+          <div className="month-header">
+            <h3>{summary.currentMonthName}</h3>
+            <div className="month-balance">
+              Net: <span className={summary.currentMonth.balance >= 0 ? 'positive' : 'negative'}>
+                {formatCurrency(summary.currentMonth.balance)}
+              </span>
             </div>
           </div>
-        </div>
-        
-        <div className="card">
-          <div className="summary-card">
-            <div className="summary-icon income">
-              <TrendingUp size={20} />
-            </div>
-            <div className="summary-details">
-              <div className="summary-label">
-                {summary.lastMonthName} Income
+          <div className="month-details">
+            <div className="month-item">
+              <div className="month-item-icon income">
+                <TrendingUp size={16} />
               </div>
-              <div className="summary-amount">
-                {formatCurrency(summary.lastMonth.income)}
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="card">
-          <div className="summary-card">
-            <div className="summary-icon expense">
-              <TrendingDown size={20} />
-            </div>
-            <div className="summary-details">
-              <div className="summary-label">
-                {summary.lastMonthName} Expenses
-              </div>
-              <div className="summary-amount">
-                {formatCurrency(summary.lastMonth.expenses)}
+              <div className="month-item-details">
+                <div className="month-item-label">Income</div>
+                <div className="month-item-amount positive">
+                  {formatCurrency(summary.currentMonth.income)}
+                </div>
+                <div className={`month-item-change ${getChangeColor(summary.currentMonth.income, summary.lastMonth.income)}`}>
+                  {getChangeIcon(summary.currentMonth.income, summary.lastMonth.income)}
+                  {Math.abs(getChangePercentage(summary.currentMonth.income, summary.lastMonth.income)).toFixed(1)}%
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-        
-        <div className="card">
-          <div className="summary-card">
-            <div className="summary-icon savings">
-              <PiggyBank size={20} />
-            </div>
-            <div className="summary-details">
-              <div className="summary-label">
-                {summary.lastMonthName} Savings
+            <div className="month-item">
+              <div className="month-item-icon expense">
+                <TrendingDown size={16} />
               </div>
-              <div className="summary-amount">
-                {formatCurrency(summary.lastMonth.savings)}
+              <div className="month-item-details">
+                <div className="month-item-label">Expenses</div>
+                <div className="month-item-amount negative">
+                  {formatCurrency(summary.currentMonth.expenses)}
+                </div>
+                <div className={`month-item-change ${getChangeColor(summary.currentMonth.expenses, summary.lastMonth.expenses, true)}`}>
+                  {getChangeIcon(summary.currentMonth.expenses, summary.lastMonth.expenses, true)}
+                  {Math.abs(getChangePercentage(summary.currentMonth.expenses, summary.lastMonth.expenses)).toFixed(1)}%
+                </div>
               </div>
             </div>
           </div>
@@ -344,7 +337,7 @@ function Dashboard() {
           <h2 id="category-comparison" className="card-title">Category Spending: Last 3 Months</h2>
         </div>
         
-        {summary.currentMonth.categoryTotals.length === 0 && summary.lastMonth.categoryTotals.length === 0 && summary.thirdMonth.categoryTotals.length === 0 ? (
+        {summary.currentMonth.categoryTotals.length === 0 && summary.lastMonth.categoryTotals.length === 0 && summary.secondLastMonth.categoryTotals.length === 0 ? (
           <div className="empty-state">
             <TrendingDown size={48} className="empty-icon" />
             <p>No expense categories yet. Add some transactions to see your spending patterns!</p>
@@ -354,15 +347,15 @@ function Dashboard() {
             {Array.from(new Set([
               ...summary.currentMonth.categoryTotals.map(c => c.category),
               ...summary.lastMonth.categoryTotals.map(c => c.category),
-              ...summary.thirdMonth.categoryTotals.map(c => c.category)
+              ...summary.secondLastMonth.categoryTotals.map(c => c.category)
             ])).map((categoryName) => {
               const currentCategory = summary.currentMonth.categoryTotals.find(c => c.category === categoryName)
               const lastCategory = summary.lastMonth.categoryTotals.find(c => c.category === categoryName)
-              const thirdCategory = summary.thirdMonth.categoryTotals.find(c => c.category === categoryName)
+              const secondLastCategory = summary.secondLastMonth.categoryTotals.find(c => c.category === categoryName)
               const currentAmount = currentCategory?.amount || 0
               const lastAmount = lastCategory?.amount || 0
-              const thirdAmount = thirdCategory?.amount || 0
-              const color = currentCategory?.color || lastCategory?.color || thirdCategory?.color || '#667eea'
+              const secondLastAmount = secondLastCategory?.amount || 0
+              const color = currentCategory?.color || lastCategory?.color || secondLastCategory?.color || '#667eea'
               
               return (
                 <div key={categoryName} className="category-comparison-row">
@@ -375,10 +368,10 @@ function Dashboard() {
                   </div>
                   
                   <div className="category-amounts">
-                    <div className="amount-third">
-                      <div className="amount-label">{summary.thirdMonthName}</div>
-                      <div className="amount-value third">
-                        {formatCurrency(thirdAmount)}
+                    <div className="amount-second-last">
+                      <div className="amount-label">{summary.secondLastMonthName}</div>
+                      <div className="amount-value second-last">
+                        {formatCurrency(secondLastAmount)}
                       </div>
                     </div>
                     
@@ -400,7 +393,7 @@ function Dashboard() {
                   {/* Mini sparkline graph */}
                   <div className="category-sparkline">
                     {(() => {
-                      const values = [thirdAmount, lastAmount, currentAmount]
+                      const values = [secondLastAmount, lastAmount, currentAmount]
                       const maxValue = Math.max(...values, 1) // Avoid division by zero
                       const points = values.map((value, index) => {
                         const x = (index * 20) + 10 // 0, 20, 40 + 10 offset
