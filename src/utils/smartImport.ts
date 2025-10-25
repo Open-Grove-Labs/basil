@@ -536,21 +536,28 @@ function calculateParsingConfidence(dateStr: string, descriptionStr: string, amo
 export function groupTransactionsByDescription(transactions: ParsedTransaction[]): TransactionGroup[] {
   const groups = new Map<string, ParsedTransaction[]>()
   
-  // Group by normalized description
+  // Group by normalized description, but separate duplicates from non-duplicates
   for (const transaction of transactions) {
     const normalized = normalizeDescription(transaction.description)
-    if (!groups.has(normalized)) {
-      groups.set(normalized, [])
+    // Create separate group keys for duplicates vs non-duplicates
+    const groupKey = transaction.isDuplicate ? `${normalized}__DUPLICATE` : normalized
+    
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, [])
     }
-    groups.get(normalized)!.push(transaction)
+    groups.get(groupKey)!.push(transaction)
   }
   
   // Convert to array and add suggestions
   const result: TransactionGroup[] = []
-  for (const [description, transactions] of groups) {
+  for (const [groupKey, transactions] of groups) {
     if (transactions.length > 1) { // Only group if multiple transactions
+      // Clean the description by removing the duplicate suffix
+      const description = groupKey.replace('__DUPLICATE', '')
+      const isDuplicateGroup = groupKey.includes('__DUPLICATE')
+      
       result.push({
-        description,
+        description: isDuplicateGroup ? `${description} (Duplicates)` : description,
         transactions,
         suggestedType: getMostCommonType(transactions),
         suggestedCategory: '',

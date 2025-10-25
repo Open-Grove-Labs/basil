@@ -77,6 +77,14 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
       // Group ALL transactions for bulk editing (including duplicates)
       const groups = groupTransactionsByDescription(processed)
       
+      // Set duplicate groups as excluded by default
+      groups.forEach(group => {
+        const allAreDuplicates = group.transactions.every(t => t.isDuplicate)
+        if (allAreDuplicates) {
+          group.includeInImport = false
+        }
+      })
+      
       // Get transactions that weren't grouped (single transactions)
       const groupedTransactionIds = new Set(
         groups.flatMap(group => group.transactions.map(t => t.id))
@@ -556,7 +564,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                     <label className="checkbox-label">
                       <input
                         type="checkbox"
-                        checked={group.transactions.some(t => selectedTransactions.has(t.id))}
+                        checked={group.includeInImport !== false}
                         onChange={(e) => updateTransactionGroup(groupIndex, { includeInImport: e.target.checked })}
                       />
                       <div className="group-title-section">
