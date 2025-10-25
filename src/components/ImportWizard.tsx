@@ -99,8 +99,8 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
       const nonDuplicateIds = processed.filter(t => !t.isDuplicate).map(t => t.id)
       setSelectedTransactions(new Set(nonDuplicateIds))
       
-      // Go directly to bulk edit, duplicates are automatically excluded
-      setCurrentStep('bulk-edit')
+      // Go to duplicates review step first
+      setCurrentStep('duplicates')
       
       setIsProcessing(false)
     }, 1000)
@@ -393,6 +393,26 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                   <small>💡 Bank format detected: Debit = money out (expenses), Credit = money in (income)</small>
                 </div>
               </>
+            ) : columnMapping.isBasilCSV ? (
+              <>
+                <div className="mapping-row">
+                  <label className="mapping-label">Amount Column *</label>
+                  <select 
+                    className="form-select"
+                    value={columnMapping.amountColumn}
+                    onChange={(e) => setColumnMapping({...columnMapping, amountColumn: e.target.value})}
+                  >
+                    <option value="">Select amount column...</option>
+                    {Object.keys(csvData[0]).map(col => (
+                      <option key={col} value={col}>{col}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="mapping-note">
+                  <small>🌿 Basil CSV detected: Your exported data with Type and Category columns</small>
+                </div>
+              </>
             ) : (
               <div className="mapping-row">
                 <label className="mapping-label">Amount Column *</label>
@@ -422,6 +442,44 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                 ))}
               </select>
             </div>
+
+            {/* Type column for Basil or other CSV formats */}
+            {(columnMapping.isBasilCSV || columnMapping.typeColumn) && (
+              <div className="mapping-row">
+                <label className="mapping-label">Type Column (Optional)</label>
+                <select 
+                  className="form-select"
+                  value={columnMapping.typeColumn || ''}
+                  onChange={(e) => setColumnMapping({...columnMapping, typeColumn: e.target.value || undefined})}
+                >
+                  <option value="">No type column</option>
+                  {Object.keys(csvData[0]).map(col => (
+                    <option key={col} value={col}>{col}</option>
+                  ))}
+                </select>
+                {columnMapping.isBasilCSV && (
+                  <small className="mapping-hint">Maps to Income/Expense from your Basil export</small>
+                )}
+              </div>
+            )}
+
+            {/* Created At column for Basil CSV */}
+            {columnMapping.isBasilCSV && (
+              <div className="mapping-row">
+                <label className="mapping-label">Created At Column (Optional)</label>
+                <select 
+                  className="form-select"
+                  value={columnMapping.createdAtColumn || ''}
+                  onChange={(e) => setColumnMapping({...columnMapping, createdAtColumn: e.target.value || undefined})}
+                >
+                  <option value="">No created at column</option>
+                  {Object.keys(csvData[0]).map(col => (
+                    <option key={col} value={col}>{col}</option>
+                  ))}
+                </select>
+                <small className="mapping-hint">Preserves original transaction creation timestamps</small>
+              </div>
+            )}
           </div>
           
           <div className="preview-section">
@@ -440,6 +498,8 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                     ) : (
                       <th>Amount</th>
                     )}
+                    {columnMapping.categoryColumn && <th>Category</th>}
+                    {columnMapping.typeColumn && <th>Type</th>}
                     <th>Category</th>
                   </tr>
                 </thead>
@@ -456,7 +516,12 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                       ) : (
                         <td>{columnMapping.amountColumn ? String(row[columnMapping.amountColumn]) : '—'}</td>
                       )}
-                      <td>{columnMapping.categoryColumn ? String(row[columnMapping.categoryColumn]) : '—'}</td>
+                      {columnMapping.categoryColumn && (
+                        <td>{String(row[columnMapping.categoryColumn] || '—')}</td>
+                      )}
+                      {columnMapping.typeColumn && (
+                        <td>{String(row[columnMapping.typeColumn] || '—')}</td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

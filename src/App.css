@@ -2609,6 +2609,14 @@ legend.form-label {
   font-size: 0.875rem;
 }
 
+.mapping-hint {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
 .preview-section {
   background: var(--color-surface);
   padding: 1.5rem;

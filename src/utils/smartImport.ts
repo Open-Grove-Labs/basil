@@ -12,6 +12,7 @@ export interface ParsedTransaction {
   amount: number
   category?: string
   type?: 'income' | 'expense'
+  createdAt?: string
   isDuplicate?: boolean
   duplicateReason?: string
   confidence: number
@@ -34,6 +35,8 @@ export interface ColumnMapping {
   creditColumn?: string
   categoryColumn?: string
   typeColumn?: string
+  createdAtColumn?: string
+  isBasilCSV?: boolean
 }
 
 export interface TransactionGroup {
@@ -68,8 +71,8 @@ const COLUMN_MAPPINGS = {
   amount: ['amount', 'transaction amount', 'value', 'sum', 'total'],
   debit: ['debit', 'debit amount', 'withdrawal', 'outgoing'],
   credit: ['credit', 'credit amount', 'deposit', 'incoming'],
-  category: ['category', 'type', 'transaction type', 'merchant category', 'category code'],
-  type: ['transaction type', 'dr/cr', 'debit/credit', 'type']
+  category: ['category', 'merchant category', 'category code'],
+  type: ['type', 'transaction type', 'dr/cr', 'debit/credit']
 }
 
 export function parseCSV(csvText: string): ImportedRow[] {
@@ -115,6 +118,11 @@ function parseCSVLine(line: string): string[] {
   return result
 }
 
+function detectBasilCSV(headers: string[]): boolean {
+  const basilHeaders = ['Date', 'Description', 'Category', 'Type', 'Amount', 'Created At']
+  return basilHeaders.every(header => headers.includes(header))
+}
+
 export function detectColumnMappings(rows: ImportedRow[]): ColumnMapping {
   if (rows.length === 0) {
     return {
@@ -123,15 +131,27 @@ export function detectColumnMappings(rows: ImportedRow[]): ColumnMapping {
       amountColumn: ''
     }
   }
-  
+
   const headers = Object.keys(rows[0])
   const mapping: ColumnMapping = {
     dateColumn: '',
     descriptionColumn: '',
     amountColumn: ''
   }
-  
-  // Detect date column
+
+  // Check if this is a Basil exported CSV
+  const isBasilCSV = detectBasilCSV(headers)
+  if (isBasilCSV) {
+    return {
+      dateColumn: 'Date',
+      descriptionColumn: 'Description',
+      amountColumn: 'Amount',
+      categoryColumn: 'Category',
+      typeColumn: 'Type',
+      createdAtColumn: 'Created At',
+      isBasilCSV: true
+    }
+  }  // Detect date column
   for (const header of headers) {
     if (COLUMN_MAPPINGS.date.some(pattern => header.includes(pattern))) {
       mapping.dateColumn = header
@@ -222,10 +242,12 @@ export function detectColumnMappings(rows: ImportedRow[]): ColumnMapping {
   
   // Try to detect category and type columns
   for (const header of headers) {
-    if (!mapping.categoryColumn && COLUMN_MAPPINGS.category.some(pattern => header.includes(pattern))) {
+    const headerLower = header.toLowerCase()
+    
+    if (!mapping.categoryColumn && COLUMN_MAPPINGS.category.some(pattern => headerLower.includes(pattern.toLowerCase()))) {
       mapping.categoryColumn = header
     }
-    if (!mapping.typeColumn && COLUMN_MAPPINGS.type.some(pattern => header.includes(pattern))) {
+    if (!mapping.typeColumn && COLUMN_MAPPINGS.type.some(pattern => headerLower.includes(pattern.toLowerCase()))) {
       mapping.typeColumn = header
     }
   }
@@ -325,7 +347,17 @@ export function parseAmount(amountStr: string): number {
 export function determineTransactionType(description: string, typeColumn?: string, isDebit?: boolean): 'income' | 'expense' {
   // If we have explicit type column data
   if (typeColumn) {
-    const type = typeColumn.toLowerCase()
+    const type = typeColumn.toLowerCase().trim()
+    
+    // Handle Basil's exact exported values first
+    if (type === 'income') {
+      return 'income'
+    }
+    if (type === 'expense') {
+      return 'expense'
+    }
+    
+    // Handle other common type column formats
     if (type.includes('credit') || type.includes('deposit') || type.includes('income')) {
       return 'income'
     }
@@ -480,6 +512,7 @@ export function processImportedTransactions(
         amount: Math.abs(amount), // Store as positive, type determines income/expense
         category: columnMapping.categoryColumn ? String(row[columnMapping.categoryColumn] || '') : '',
         type,
+        createdAt: columnMapping.createdAtColumn ? String(row[columnMapping.createdAtColumn] || '') : undefined,
         confidence: calculateParsingConfidence(dateStr, descriptionStr, String(amount)),
         originalRow: row
       }
@@ -554,7 +587,7 @@ export function groupTransactionsByDescription(transactions: ParsedTransaction[]
         description: isDuplicateGroup ? `${description} (Duplicates)` : description,
         transactions,
         suggestedType: getMostCommonType(transactions),
-        suggestedCategory: '',
+        suggestedCategory: getMostCommonCategory(transactions),
         includeInImport: true
       })
     }
@@ -579,4 +612,30 @@ function getMostCommonType(transactions: ParsedTransaction[]): 'income' | 'expen
   return Object.entries(typeCounts).reduce((a, b) => 
     typeCounts[a[0] as keyof typeof typeCounts] > typeCounts[b[0] as keyof typeof typeCounts] ? a : b
   )[0] as 'income' | 'expense'
+}
+
+function getMostCommonCategory(transactions: ParsedTransaction[]): string {
+  const categoryCounts = new Map<string, number>()
+  
+  transactions.forEach(t => {
+    const category = t.category?.trim()
+    if (category && category !== '') {
+      categoryCounts.set(category, (categoryCounts.get(category) || 0) + 1)
+    }
+  })
+  
+  if (categoryCounts.size === 0) return ''
+  
+  // Return the category with the highest count
+  let maxCount = 0
+  let mostCommonCategory = ''
+  
+  for (const [category, count] of categoryCounts) {
+    if (count > maxCount) {
+      maxCount = count
+      mostCommonCategory = category
+    }
+  }
+  
+  return mostCommonCategory
 }
