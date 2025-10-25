@@ -89,7 +89,7 @@ function Budget() {
           remaining: limit - spent
         }
       })
-      .sort((a, b) => a.categoryName.localeCompare(b.categoryName))
+      .sort((a, b) => b.limit - a.limit) // Sort by budget amount (highest first)
 
     setBudgetItems(items)
   }
@@ -129,6 +129,32 @@ function Budget() {
     return suggestions
   }
 
+  const handleTargetChange = (target: BudgetTarget) => {
+    setSelectedTarget(target)
+    
+    // Automatically apply suggestions when target changes
+    const suggestions = generateSuggestions(target)
+    setEditingLimits(prev => ({
+      ...prev,
+      ...Object.fromEntries(
+        Object.entries(suggestions).map(([id, amount]) => [id, amount.toString()])
+      )
+    }))
+  }
+
+  const openSuggestions = () => {
+    setShowSuggestions(true)
+    
+    // Auto-apply initial suggestions based on current target
+    const suggestions = generateSuggestions(selectedTarget)
+    setEditingLimits(prev => ({
+      ...prev,
+      ...Object.fromEntries(
+        Object.entries(suggestions).map(([id, amount]) => [id, amount.toString()])
+      )
+    }))
+  }
+
   const applySuggestions = () => {
     const suggestions = generateSuggestions(selectedTarget)
     setEditingLimits(prev => ({
@@ -142,9 +168,11 @@ function Budget() {
 
   const startEditing = () => {
     setIsEditing(true)
-    // Initialize editing limits with current values
+    // Initialize editing limits with current values, but preserve any existing editing limits
+    // (e.g., from applied suggestions)
     const limits = budgetItems.reduce((acc, item) => {
-      acc[item.categoryId] = item.limit.toString()
+      // Use existing editing limit if available, otherwise use current budget limit
+      acc[item.categoryId] = editingLimits[item.categoryId] || item.limit.toString()
       return acc
     }, {} as Record<string, string>)
     setEditingLimits(limits)
@@ -227,7 +255,7 @@ function Budget() {
               {transactions.length > 0 && (
                 <button
                   className="btn btn-secondary"
-                  onClick={() => setShowSuggestions(true)}
+                  onClick={openSuggestions}
                 >
                   <Calculator size={16} />
                   Auto-Suggest
@@ -258,7 +286,7 @@ function Budget() {
       {/* Auto-Suggestion Modal */}
       {showSuggestions && (
         <div className="modal-overlay" onClick={() => setShowSuggestions(false)}>
-          <div className="modal-content suggestion-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal suggestion-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>Budget Suggestions</h3>
               <button
@@ -280,7 +308,7 @@ function Budget() {
                     name="target"
                     value="stabilize"
                     checked={selectedTarget === 'stabilize'}
-                    onChange={(e) => setSelectedTarget(e.target.value as BudgetTarget)}
+                    onChange={(e) => handleTargetChange(e.target.value as BudgetTarget)}
                   />
                   <div className="target-info">
                     <div className="target-title">
@@ -299,7 +327,7 @@ function Budget() {
                     name="target"
                     value="reduce"
                     checked={selectedTarget === 'reduce'}
-                    onChange={(e) => setSelectedTarget(e.target.value as BudgetTarget)}
+                    onChange={(e) => handleTargetChange(e.target.value as BudgetTarget)}
                   />
                   <div className="target-info">
                     <div className="target-title">
