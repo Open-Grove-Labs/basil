@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react'
-import { Download, Upload, Trash2, Database, Palette, Shield, HelpCircle, Moon, Sun, DollarSign } from 'lucide-react'
+import { Download, Trash2, Database, Palette, Shield, HelpCircle, Moon, Sun, DollarSign } from 'lucide-react'
 import { loadTransactions, clearAllData, loadSettings, updateCurrency, SUPPORTED_CURRENCIES } from '../utils/storage'
 import { clearMockData, shouldLoadMockData } from '../utils/mockData'
-import ImportWizard from './ImportWizard'
 import type { CurrencyConfig } from '../types'
 
 function Settings() {
   const [isExporting, setIsExporting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [showImportWizard, setShowImportWizard] = useState(false)
   const [themePreference, setThemePreference] = useState<'light' | 'dark' | 'auto'>(() => {
     return (localStorage.getItem('basil.theme') as 'light' | 'dark' | 'auto') || 'auto'
   })
@@ -276,14 +274,6 @@ function Settings() {
               {isExporting ? 'Exporting...' : 'Export Data (CSV)'}
             </button>
             
-            {/* Smart Import Button */}
-            <button 
-              className="btn btn-secondary settings-btn"
-              onClick={() => setShowImportWizard(true)}
-            >
-              <Upload size={20} />
-              Smart Import (CSV)
-            </button>
             
             {/* Delete Button */}
             <button
@@ -403,19 +393,7 @@ function Settings() {
         </div>
       )}
 
-      {/* Smart Import Wizard */}
-      {showImportWizard && (
-        <div className="import-modal-overlay">
-          <ImportWizard
-            onComplete={() => {
-              setShowImportWizard(false)
-              // Refresh the page data
-              window.location.reload()
-            }}
-            onCancel={() => setShowImportWizard(false)}
-          />
-        </div>
-      )}
+
     </div>
   )
 }

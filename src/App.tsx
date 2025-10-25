@@ -103,22 +103,7 @@ function App() {
     }
   }
 
-  const getPageTitle = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return 'Dashboard'
-      case 'add':
-        return 'Add Transaction'
-      case 'analytics':
-        return 'Analytics'
-      case 'history':
-        return 'Transaction History'
-      case 'settings':
-        return 'Settings'
-      default:
-        return 'Dashboard'
-    }
-  }
+
 
   return (
     <div className="app">
@@ -126,21 +111,28 @@ function App() {
       <header className="app-header">
         <div className="app-header-container">
           <div className="app-header-content">
-            <div className="app-title-section">
-              <h1 className="app-title">
-                <span className="app-icon">🌿</span>
-                Basil
-              </h1>
+            <h1 className="app-title">
+              <span className="app-icon">🌿</span>
+              Basil
+            </h1>
+            <div className="header-buttons">
               <button 
-                className="help-button"
+                className="header-icon-button"
                 onClick={() => setShowHelpModal(true)}
                 aria-label="Help"
                 title="Help & About"
               >
                 ?
               </button>
+              <button 
+                className="header-icon-button"
+                onClick={() => setActiveTab('settings')}
+                aria-label="Settings"
+                title="Settings"
+              >
+                <Settings size={20} />
+              </button>
             </div>
-            <h2 className="page-title-header">{getPageTitle()}</h2>
           </div>
         </div>
       </header>
@@ -190,15 +182,6 @@ function App() {
         >
           <History size={20} aria-hidden="true" />
           <span>History</span>
-        </button>
-        <button
-          className={`nav-button ${activeTab === 'settings' ? 'active' : ''}`}
-          onClick={() => setActiveTab('settings')}
-          aria-current={activeTab === 'settings' ? 'page' : undefined}
-          aria-label="Settings - Configure app preferences and manage data"
-        >
-          <Settings size={20} aria-hidden="true" />
-          <span>Settings</span>
         </button>
         </div>
       </nav>

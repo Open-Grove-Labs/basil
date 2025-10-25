@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { Plus, Check, PlusCircle, Edit, Trash2, X } from 'lucide-react'
+import { Plus, Check, PlusCircle, Edit, Trash2, X, Upload } from 'lucide-react'
 import { format } from 'date-fns'
 import { addTransaction, addCategory, getCategoriesByUsage, loadTransactions, loadSettings, parseLocalDate, formatCurrency, updateTransaction, deleteTransaction, loadCategories } from '../utils/storage'
 import type { Category, Transaction, CurrencyConfig } from '../types'
+import ImportWizard from './ImportWizard'
 
 interface AddTransactionProps {
   onSuccess: () => void
@@ -47,6 +48,9 @@ function AddTransaction({ onSuccess }: AddTransactionProps) {
   
   // Recent transactions state
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([])
+  
+  // Import wizard state
+  const [viewMode, setViewMode] = useState<'manual' | 'import'>('manual')
   
   // Edit functionality state for recent transactions
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -475,8 +479,37 @@ function AddTransaction({ onSuccess }: AddTransactionProps) {
           <span>{showErrorMessage}</span>
         </div>
       )}
+
+      {/* Mode Toggle Header */}
+      <div className="mode-toggle-header">
+        <button
+          type="button"
+          className={`mode-toggle-btn ${viewMode === 'manual' ? 'active' : ''}`}
+          onClick={() => setViewMode('manual')}
+        >
+          <Plus size={16} />
+          Manual Entry
+        </button>
+        <button
+          type="button"
+          className={`mode-toggle-btn ${viewMode === 'import' ? 'active' : ''}`}
+          onClick={() => setViewMode('import')}
+        >
+          <Upload size={16} />
+          Import CSV
+        </button>
+      </div>
       
-      <div className="card">
+      {viewMode === 'import' ? (
+        <ImportWizard
+          onComplete={() => {
+            setViewMode('manual')
+            onSuccess()
+          }}
+          onCancel={() => setViewMode('manual')}
+        />
+      ) : (
+        <div className="card">
         <form onSubmit={handleSubmit}>
           {/* Transaction Type */}
           <fieldset className="form-group">
@@ -709,6 +742,7 @@ function AddTransaction({ onSuccess }: AddTransactionProps) {
           </button>
         </form>
       </div>
+      )}
 
       {/* Recent Transactions */}
       <div className="card">
