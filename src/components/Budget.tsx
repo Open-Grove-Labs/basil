@@ -115,13 +115,17 @@ function Budget() {
     const suggestions: Record<string, number> = {}
 
     budgetItems.forEach(item => {
-      const avgSpending = calculateAverageSpending(item.categoryName, 3)
-      
-      if (target === 'reduce' && REDUCIBLE_CATEGORIES.includes(item.categoryName)) {
-        // Reduce by 10% for specified categories
-        suggestions[item.categoryId] = Math.round(avgSpending * 0.9)
+      if (target === 'reduce') {
+        // For reduce: use 3 months average, then apply 10% reduction for certain categories
+        const avgSpending = calculateAverageSpending(item.categoryName, 3)
+        if (REDUCIBLE_CATEGORIES.includes(item.categoryName)) {
+          suggestions[item.categoryId] = Math.round(avgSpending * 0.9)
+        } else {
+          suggestions[item.categoryId] = avgSpending
+        }
       } else {
-        // Stabilize at average spending
+        // For stabilize: use 2 months average
+        const avgSpending = calculateAverageSpending(item.categoryName, 2)
         suggestions[item.categoryId] = avgSpending
       }
     })
@@ -299,7 +303,7 @@ function Budget() {
             </div>
             
             <div className="modal-body">
-              <p>Choose a target to automatically suggest budget limits based on your last 3 months of spending:</p>
+              <p>Choose a target to automatically suggest budget limits based on your recent spending history:</p>
               
               <div className="target-options">
                 <label className="target-option">
@@ -316,7 +320,7 @@ function Budget() {
                       Stabilize Expenses
                     </div>
                     <div className="target-description">
-                      Set budgets at your 3-month average spending per category
+                      Set budgets at your 2-month average spending per category
                     </div>
                   </div>
                 </label>
