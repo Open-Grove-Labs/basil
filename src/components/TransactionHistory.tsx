@@ -85,7 +85,9 @@ function TransactionHistory() {
     if (selectedMonth) {
       filtered = filtered.filter(t => {
         const transactionDate = parseLocalDate(t.date)
-        const filterDate = new Date(selectedMonth + '-01') // Create date from YYYY-MM format
+        // Create filter date using same local date parsing to avoid timezone issues
+        const [year, month] = selectedMonth.split('-').map(Number)
+        const filterDate = new Date(year, month - 1, 1) // month is 0-indexed, same as parseLocalDate
         return transactionDate.getFullYear() === filterDate.getFullYear() &&
                transactionDate.getMonth() === filterDate.getMonth()
       })
