@@ -43,11 +43,13 @@ export interface SpendingTrend {
   expenses: number | null;
   balance: number | null;
   savings: number | null;
+  cumulativeBalance: number | null;
   isProjection?: boolean;
   projectedIncome?: number | null;
   projectedExpenses?: number | null;
   projectedBalance?: number | null;
   projectedSavings?: number | null;
+  projectedCumulativeBalance?: number | null;
 }
 
 export interface CategorySpending {

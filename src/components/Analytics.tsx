@@ -132,9 +132,10 @@ function Analytics() {
 
     setCategorySpending(categoryData);
 
-    // Calculate monthly trends with proper cumulative savings
+    // Calculate monthly trends with cumulative net balance
     const trends: SpendingTrend[] = [];
     let cumulativeSavings = 0;
+    let cumulativeBalance = 0;
     
     for (let i = months - 1; i >= 0; i--) {
       const monthStart = startOfMonth(subMonths(now, i));
@@ -158,8 +159,9 @@ function Analytics() {
 
       const monthBalance = monthIncome - monthExpenses - monthSavings;
       
-      // Add this month's savings to the cumulative total
+      // Add this month's savings and net balance to the cumulative totals
       cumulativeSavings += monthSavings;
+      cumulativeBalance += monthBalance;
       
       trends.push({
         date: format(monthStart, "MMM yyyy"),
@@ -167,6 +169,7 @@ function Analytics() {
         expenses: monthExpenses,
         savings: cumulativeSavings, // Show cumulative savings total
         balance: monthBalance,
+        cumulativeBalance: cumulativeBalance, // Show cumulative net balance - the key metric!
         isProjection: false,
       });
     }
@@ -245,7 +248,8 @@ function Analytics() {
           projectedIncome: null,
           projectedExpenses: null,
           projectedBalance: null,
-          projectedSavings: null
+          projectedSavings: null,
+          projectedCumulativeBalance: null
         });
       });
       
@@ -253,6 +257,7 @@ function Analytics() {
       const lastTrend = trends[trends.length - 1];
       const avgBalance = avgIncome - avgExpenses - avgMonthlySavings;
       let projectedSavings = lastTrend.savings || 0;
+      let projectedCumulativeBalance = lastTrend.cumulativeBalance || 0;
       
       projections.push({
         date: lastTrend.date,
@@ -260,10 +265,12 @@ function Analytics() {
         expenses: null,
         balance: null,
         savings: null,
+        cumulativeBalance: null,
         projectedIncome: avgIncome,
         projectedExpenses: avgExpenses,
         projectedBalance: avgBalance,
         projectedSavings: avgMonthlySavings,
+        projectedCumulativeBalance: projectedCumulativeBalance,
         isProjection: true
       });
       
@@ -271,6 +278,7 @@ function Analytics() {
       for (let i = 1; i <= months; i++) {
         const futureDate = format(subMonths(now, -i), "MMM yyyy");
         projectedSavings += avgMonthlySavings; // Accumulate savings based on average monthly savings
+        projectedCumulativeBalance += avgBalance; // Accumulate net balance - this shows the financial trajectory!
         
         projections.push({
           date: futureDate,
@@ -278,10 +286,12 @@ function Analytics() {
           expenses: null,
           balance: null,
           savings: null,
+          cumulativeBalance: null,
           projectedIncome: avgIncome,
           projectedExpenses: avgExpenses,
           projectedBalance: avgBalance,
           projectedSavings: projectedSavings,
+          projectedCumulativeBalance: projectedCumulativeBalance,
           isProjection: true
         });
       }
@@ -313,10 +323,6 @@ function Analytics() {
   const projectedData = projectionTrends.filter(t => t.isProjection && t.projectedIncome !== null);
   const projectedTotalIncome = projectedData.reduce((sum, t) => sum + (t.projectedIncome || 0), 0);
   const projectedTotalExpenses = projectedData.reduce((sum, t) => sum + (t.projectedExpenses || 0), 0);
-  
-  // Get final projected savings value
-  const finalProjectedSavings = projectedData.length > 0 ? projectedData[projectedData.length - 1].projectedSavings || 0 : 0;
-  const currentSavings = projectionTrends.find(t => !t.isProjection && t.savings !== null)?.savings || 0;
 
   return (
     <div className="page-content">
@@ -434,16 +440,10 @@ function Analytics() {
       {/* Financial Projection Chart */}
       {projectionTrends.length > 0 && (
         <div className="card">
-          <h3 className="card-title">Financial Projection</h3>
+          <h3 className="card-title">Net Worth Trajectory</h3>
           <p className="card-subtitle">
-            Based on your recent {
-              timeRange === "3m" ? "3-month" 
-              : timeRange === "6m" ? "6-month" 
-              : timeRange === "1y" ? "1-year"
-              : timeRange === "2y" ? "2-year"
-              : "3-year"
-            } trends, 
-            projected forward for the same period
+            Track your cumulative financial position over time. The thick green line shows your net worth trajectory - 
+            if it's trending up, you're building wealth; if down, you may need to adjust spending.
           </p>
           <div className="chart-container">
             <ResponsiveContainer width="100%" height={350}>
@@ -466,16 +466,16 @@ function Analytics() {
                   type="monotone"
                   dataKey="balance"
                   stroke="#3b82f6"
-                  strokeWidth={3}
-                  name="Net Balance"
+                  strokeWidth={2}
+                  name="Monthly Net Balance"
                   connectNulls={false}
                 />
                 <Line
                   type="monotone"
-                  dataKey="savings"
-                  stroke="#18913cff"
+                  dataKey="cumulativeBalance"
+                  stroke="#10b981"
                   strokeWidth={3}
-                  name="Savings Total"
+                  name="Cumulative Net Worth"
                   connectNulls={false}
                 />
                 {/* Projected Lines */}
@@ -485,16 +485,16 @@ function Analytics() {
                   stroke="#3b82f6"
                   strokeWidth={2}
                   strokeDasharray="8 4"
-                  name="Projected Net Balance"
+                  name="Projected Monthly Balance"
                   connectNulls={false}
                 />
                 <Line
                   type="monotone"
-                  dataKey="projectedSavings"
-                  stroke="#18913cff"
-                  strokeWidth={2}
+                  dataKey="projectedCumulativeBalance"
+                  stroke="#10b981"
+                  strokeWidth={3}
                   strokeDasharray="8 4"
-                  name="Projected Savings"
+                  name="Projected Net Worth"
                   connectNulls={false}
                 />
               </LineChart>
@@ -529,27 +529,47 @@ function Analytics() {
                 </div>
               </div>
               
-              {/* Savings Trajectory Summary */}
+              {/* Net Worth Trajectory Summary */}
               <div className="savings-trajectory">
                 <div className="trajectory-info">
-                  <strong>Savings Trajectory:</strong>
-                  {finalProjectedSavings > currentSavings ? (
-                    <span className="trajectory-positive">
-                      📈 Growing by {formatCurrency(finalProjectedSavings - currentSavings)}
-                    </span>
-                  ) : finalProjectedSavings < currentSavings ? (
-                    <span className="trajectory-negative">
-                      📉 Declining by {formatCurrency(currentSavings - finalProjectedSavings)}
-                    </span>
-                  ) : (
-                    <span className="trajectory-stable">
-                      ➡️ Remaining stable at {formatCurrency(currentSavings)}
-                    </span>
-                  )}
+                  <strong>Net Worth Trajectory:</strong>
+                  {(() => {
+                    const currentNetWorth = projectionTrends.find(t => !t.isProjection && t.cumulativeBalance !== null)?.cumulativeBalance || 0;
+                    const finalProjectedNetWorth = projectedData.length > 0 ? projectedData[projectedData.length - 1].projectedCumulativeBalance || 0 : 0;
+                    
+                    if (finalProjectedNetWorth > currentNetWorth) {
+                      return (
+                        <span className="trajectory-positive">
+                          📈 Growing by {formatCurrency(finalProjectedNetWorth - currentNetWorth)}
+                        </span>
+                      );
+                    } else if (finalProjectedNetWorth < currentNetWorth) {
+                      return (
+                        <span className="trajectory-negative">
+                          📉 Declining by {formatCurrency(currentNetWorth - finalProjectedNetWorth)}
+                        </span>
+                      );
+                    } else {
+                      return (
+                        <span className="trajectory-stable">
+                          ➡️ Remaining stable at {formatCurrency(currentNetWorth)}
+                        </span>
+                      );
+                    }
+                  })()}
                 </div>
                 <div className="trajectory-details">
-                  <span>Current Savings: {formatCurrency(currentSavings)}</span>
-                  <span>Projected Savings: {formatCurrency(finalProjectedSavings)}</span>
+                  {(() => {
+                    const currentNetWorth = projectionTrends.find(t => !t.isProjection && t.cumulativeBalance !== null)?.cumulativeBalance || 0;
+                    const finalProjectedNetWorth = projectedData.length > 0 ? projectedData[projectedData.length - 1].projectedCumulativeBalance || 0 : 0;
+                    
+                    return (
+                      <>
+                        <span>Current Net Worth: {formatCurrency(currentNetWorth)}</span>
+                        <span>Projected Net Worth: {formatCurrency(finalProjectedNetWorth)}</span>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
