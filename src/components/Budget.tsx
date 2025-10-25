@@ -96,7 +96,7 @@ function Budget() {
 
   const calculateAverageSpending = (categoryName: string, months: number = 3) => {
     const now = new Date()
-    const startDate = startOfMonth(subMonths(now, months - 1))
+    const startDate = startOfMonth(subMonths(now, months))
     const endDate = endOfMonth(subMonths(now, 1)) // Exclude current month
 
     const relevantTransactions = transactions.filter(t =>
@@ -104,6 +104,36 @@ function Budget() {
       t.category === categoryName &&
       isWithinInterval(parseLocalDate(t.date), { start: startDate, end: endDate })
     )
+
+    // Debug logging for troubleshooting
+    if (categoryName === 'Rent / Mortgage') {
+      console.log('=== Rent / Mortgage Debug ===')
+      console.log('Months requested:', months)
+      console.log('Current date (now):', now)
+      console.log('Date range:', startDate, 'to', endDate)
+      
+      // Show all transactions for this category
+      const allCategoryTransactions = transactions.filter(t => t.category === categoryName)
+      console.log('All transactions for category:', allCategoryTransactions.length)
+      console.log('All category transactions:', allCategoryTransactions.map(t => ({
+        date: t.date,
+        parsedDate: parseLocalDate(t.date),
+        amount: t.amount,
+        type: t.type,
+        inDateRange: isWithinInterval(parseLocalDate(t.date), { start: startDate, end: endDate })
+      })))
+      
+      console.log('Relevant transactions found:', relevantTransactions.length)
+      console.log('Relevant transactions:', relevantTransactions.map(t => ({
+        date: t.date,
+        amount: t.amount,
+        parsedDate: parseLocalDate(t.date)
+      })))
+      const totalSpent = relevantTransactions.reduce((sum, t) => sum + t.amount, 0)
+      console.log('Total spent:', totalSpent)
+      console.log('Average (total/months):', Math.round(totalSpent / months))
+      console.log('==============================')
+    }
 
     if (relevantTransactions.length === 0) return 0
 
