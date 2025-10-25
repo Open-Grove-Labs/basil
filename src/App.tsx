@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Home, Plus, TrendingUp, History, Settings, HelpCircle, X } from 'lucide-react'
+import { Home, Plus, TrendingUp, History, Settings, X } from 'lucide-react'
 import Dashboard from './components/Dashboard'
 import AddTransaction from './components/AddTransaction.tsx'
 import Analytics from './components/Analytics.tsx'
@@ -137,7 +137,7 @@ function App() {
                 aria-label="Help"
                 title="Help & About"
               >
-                <HelpCircle size={16} />
+                ?
               </button>
             </div>
             <h2 className="page-title-header">{getPageTitle()}</h2>

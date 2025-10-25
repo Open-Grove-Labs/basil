@@ -193,8 +193,8 @@ html, body {
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: var(--color-text-inverse);
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -202,6 +202,10 @@ html, body {
   transition: all 0.2s ease;
   flex-shrink: 0;
   opacity: 0.8;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0;
 }
 
 .help-button:hover {
@@ -1969,6 +1973,15 @@ legend.form-label {
 /* Help Modal Styles */
 .help-modal {
   max-width: 600px;
+  width: 100%;
+  background: var(--color-surface-elevated);
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px var(--shadow-heavy);
+  border: 1px solid var(--color-border);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .help-modal .modal-header {
@@ -2013,8 +2026,9 @@ legend.form-label {
 
 .help-modal .modal-body {
   padding: 1.5rem;
-  max-height: 70vh;
+  flex: 1;
   overflow-y: auto;
+  min-height: 0; /* Important for flexbox scrolling */
 }
 
 .help-section {
@@ -2134,6 +2148,30 @@ legend.form-label {
   .theme-btn {
     padding: 0.75rem;
     font-size: 0.875rem;
+  }
+  
+  .help-modal {
+    max-width: calc(100% - 2rem);
+    max-height: 95vh;
+    margin: 1rem;
+  }
+  
+  .help-modal .modal-header {
+    padding: 1rem 1rem 0.75rem;
+  }
+  
+  .help-modal .modal-header h2 {
+    font-size: 1.25rem;
+  }
+  
+  .help-modal .modal-body {
+    padding: 1rem;
+  }
+  
+  .modal-overlay {
+    padding: 0.5rem;
+    align-items: flex-start;
+    padding-top: 2rem;
   }
 }
 
