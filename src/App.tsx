@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Home, Plus, TrendingUp, History, Settings, X } from 'lucide-react'
+import { Home, Plus, TrendingUp, History, Settings, X, Target } from 'lucide-react'
 import Dashboard from './components/Dashboard'
 import AddTransaction from './components/AddTransaction.tsx'
 import Analytics from './components/Analytics.tsx'
 import TransactionHistory from './components/TransactionHistory.tsx'
+import Budget from './components/Budget.tsx'
 import SettingsComponent from './components/Settings'
 import { initializeMockData } from './utils/mockData'
 import './App.css'
 
-type TabType = 'dashboard' | 'add' | 'analytics' | 'history' | 'settings'
+type TabType = 'dashboard' | 'add' | 'analytics' | 'history' | 'budget' | 'settings'
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard')
@@ -96,6 +97,8 @@ function App() {
         return <Analytics key={refreshKey} />
       case 'history':
         return <TransactionHistory key={refreshKey} />
+      case 'budget':
+        return <Budget key={refreshKey} />
       case 'settings':
         return <SettingsComponent />
       default:
@@ -182,6 +185,15 @@ function App() {
         >
           <History size={20} aria-hidden="true" />
           <span>History</span>
+        </button>
+        <button
+          className={`nav-button ${activeTab === 'budget' ? 'active' : ''}`}
+          onClick={() => setActiveTab('budget')}
+          aria-current={activeTab === 'budget' ? 'page' : undefined}
+          aria-label="Budget - Set spending limits and track progress"
+        >
+          <Target size={20} aria-hidden="true" />
+          <span>Budget</span>
         </button>
         </div>
       </nav>
