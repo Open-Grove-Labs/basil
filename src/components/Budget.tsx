@@ -161,13 +161,25 @@ function Budget() {
 
   const applySuggestions = () => {
     const suggestions = generateSuggestions(selectedTarget)
-    setEditingLimits(prev => ({
-      ...prev,
-      ...Object.fromEntries(
-        Object.entries(suggestions).map(([id, amount]) => [id, amount.toString()])
-      )
+    
+    // Create new budget data from suggestions
+    const newBudgets: BudgetData[] = Object.entries(suggestions).map(([categoryId, amount]) => ({
+      categoryId,
+      limit: amount
     }))
+
+    // Save to localStorage immediately
+    setBudgetData(newBudgets)
+    localStorage.setItem('basil_budgets', JSON.stringify(newBudgets))
+    
+    // Recalculate budget items with new limits to update the display
+    calculateBudgetItems(transactions, categories, newBudgets)
+    
+    // Close the suggestions modal
     setShowSuggestions(false)
+    
+    // Clear editing state since we've saved directly
+    setEditingLimits({})
   }
 
   const startEditing = () => {
