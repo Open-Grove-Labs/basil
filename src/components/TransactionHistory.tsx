@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Search, Trash2, Edit, Check, X, Edit3, PlusCircle } from 'lucide-react'
-import { format } from 'date-fns'
+import { format, subMonths, startOfMonth } from 'date-fns'
 import { loadTransactions, loadCategories, updateTransaction, deleteTransaction, parseLocalDate, formatCurrency, loadSettings, addCategory } from '../utils/storage'
 import { groupTransactionsByDescription, type TransactionGroup, type ImportedRow } from '../utils/smartImport'
 import type { Transaction, Category, CurrencyConfig } from '../types'
@@ -12,6 +12,7 @@ function TransactionHistory() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedType, setSelectedType] = useState<'all' | 'income' | 'expense' | 'savings'>('all')
+  const [selectedMonth, setSelectedMonth] = useState('')
   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   
@@ -33,6 +34,22 @@ function TransactionHistory() {
     date: ''
   })
   const [currency] = useState<CurrencyConfig>(() => loadSettings().currency)
+
+  // Generate last 12 months for month filter
+  const getLastTwelveMonths = useCallback(() => {
+    const months = []
+    const now = new Date()
+    
+    for (let i = 0; i < 12; i++) {
+      const date = startOfMonth(subMonths(now, i))
+      months.push({
+        value: format(date, 'yyyy-MM'),
+        label: format(date, 'MMMM yyyy')
+      })
+    }
+    
+    return months
+  }, [])
 
   const loadTransactionData = useCallback(() => {
     const data = loadTransactions()
@@ -64,6 +81,16 @@ function TransactionHistory() {
       filtered = filtered.filter(t => t.type === selectedType)
     }
 
+    // Filter by month
+    if (selectedMonth) {
+      filtered = filtered.filter(t => {
+        const transactionDate = parseLocalDate(t.date)
+        const filterDate = new Date(selectedMonth + '-01') // Create date from YYYY-MM format
+        return transactionDate.getFullYear() === filterDate.getFullYear() &&
+               transactionDate.getMonth() === filterDate.getMonth()
+      })
+    }
+
     // Sort
     filtered.sort((a, b) => {
       let comparison = 0
@@ -78,7 +105,7 @@ function TransactionHistory() {
     })
 
     setFilteredTransactions(filtered)
-  }, [transactions, searchTerm, selectedCategory, selectedType, sortBy, sortOrder])
+  }, [transactions, searchTerm, selectedCategory, selectedType, selectedMonth, sortBy, sortOrder])
 
   useEffect(() => {
     loadTransactionData()
@@ -392,6 +419,23 @@ function TransactionHistory() {
               <option value="income">Income</option>
               <option value="expense">Expense</option>
               <option value="savings">Savings</option>
+            </select>
+          </div>
+
+          {/* Month Filter */}
+          <div className="filter-group">
+            <select
+              className="form-select"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              aria-label="Filter by month"
+            >
+              <option value="">All Months</option>
+              {getLastTwelveMonths().map((month) => (
+                <option key={month.value} value={month.value}>
+                  {month.label}
+                </option>
+              ))}
             </select>
           </div>
 
