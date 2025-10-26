@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown } from 'lucide-react'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
-import { loadTransactions, loadCategories, parseLocalDate } from '../utils/storage'
+import { loadTransactions, loadCategories, loadBudgets, parseLocalDate } from '../utils/storage'
 import { formatCurrency } from '../utils/currency'
 
 interface MonthlyData {
@@ -12,6 +12,8 @@ interface MonthlyData {
     category: string
     amount: number
     color: string
+    budgetAmount?: number
+    budgetRemaining?: number
   }>
 }
 
@@ -52,6 +54,7 @@ function Dashboard() {
   const loadDashboardData = () => {
     const transactions = loadTransactions()
     const categories = loadCategories()
+    const budgets = loadBudgets()
     
     const now = new Date()
     const currentMonthStart = startOfMonth(now)
@@ -145,10 +148,19 @@ function Dashboard() {
     const currentCategoriesData = Array.from(allCategories)
       .map(categoryName => {
         const category = categories.find(c => c.name === categoryName)
+        const budget = budgets.find(b => {
+          const budgetCategory = categories.find(c => c.id === b.categoryId)
+          // Match if category name matches AND (period is monthly OR period is undefined - assuming monthly default)
+          return budgetCategory?.name === categoryName && (b.period === 'monthly' || b.period === undefined)
+        })
+        const currentAmount = currentCategoryTotals.get(categoryName) || 0
+        
         return {
           category: categoryName,
-          amount: currentCategoryTotals.get(categoryName) || 0,
-          color: category?.color || '#667eea'
+          amount: currentAmount,
+          color: category?.color || '#667eea',
+          budgetAmount: budget?.limit,
+          budgetRemaining: budget ? budget.limit - currentAmount : undefined
         }
       })
       .sort((a, b) => b.amount - a.amount)
@@ -371,6 +383,7 @@ function Dashboard() {
               const lastAmount = lastCategory?.amount || 0
               const secondLastAmount = secondLastCategory?.amount || 0
               const color = currentCategory?.color || lastCategory?.color || secondLastCategory?.color || '#667eea'
+              const budgetRemaining = currentCategory?.budgetRemaining
               
               return (
                 <div 
@@ -380,7 +393,14 @@ function Dashboard() {
                 >
                   <div className="category-info">
                     <div className="category-dot" />
-                    <div className="category-name">{categoryName}</div>
+                    <div className="category-name-and-budget">
+                      <div className="category-name">{categoryName}</div>
+                      {budgetRemaining !== undefined && (
+                        <div className={`category-budget ${budgetRemaining < 0 ? 'over-budget' : 'under-budget'}`}>
+                          Budget: {budgetRemaining >= 0 ? formatCurrency(budgetRemaining) : `-${formatCurrency(Math.abs(budgetRemaining))}`} left
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   <div className="category-amounts">

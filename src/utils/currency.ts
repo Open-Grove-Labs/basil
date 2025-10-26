@@ -4,7 +4,6 @@ import { loadSettings, saveSettings } from "./storage";
 // Utility function to format currency amount
 export function formatCurrency(amount: number, currency?: CurrencyConfig): string {
   const currencyConfig = currency || loadSettings().currency;
-  console.warn({ currency })
   const formattedAmount = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currencyConfig.code,

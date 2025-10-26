@@ -18,8 +18,8 @@ export interface Category {
 export interface Budget {
   id: string;
   categoryId: string;
-  amount: number;
-  period: 'monthly' | 'weekly' | 'yearly';
+  limit: number; // Changed from 'amount' to 'limit' to match actual data
+  period?: 'monthly' | 'weekly' | 'yearly'; // Made optional since some budgets don't have this
 }
 
 export interface BudgetSummary {

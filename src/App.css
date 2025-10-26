@@ -934,12 +934,54 @@ legend.form-label {
   flex: 1;
 }
 
+.category-name-and-budget {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
 .category-name {
   font-weight: 500;
   color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.category-budget {
+  font-size: 0.875rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.category-budget.under-budget {
+  color: var(--color-success);
+}
+
+.category-budget.over-budget {
+  color: var(--color-expense);
+}
+
+/* Large screens - enhanced budget styling and spacing */
+@media (min-width: 1024px) {
+  .category-name-and-budget {
+    gap: 1rem;
+  }
+  
+  .category-name {
+    flex-shrink: 0;
+  }
+  
+  .category-budget {
+    font-size: 0.8125rem;
+    opacity: 0.8;
+    padding-right: 1rem;
+    flex-shrink: 0;
+  }
 }
 
 .category-sparkline {
@@ -2025,6 +2067,16 @@ legend.form-label {
   
   .category-info {
     justify-content: flex-start;
+  }
+  
+  .category-name-and-budget {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .category-budget {
+    flex-shrink: 0;
   }
   
   .category-sparkline {
