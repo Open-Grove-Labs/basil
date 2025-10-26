@@ -1,13 +1,10 @@
 import { useState, useCallback } from "react";
 import {
-  Upload,
-  FileText,
   CheckCircle,
   AlertCircle,
   ArrowRight,
   ArrowLeft,
   Download,
-  Edit3,
   Check,
   X,
   PlusCircle,
@@ -17,21 +14,17 @@ import {
   detectColumnMappings,
   processImportedTransactions,
   groupTransactionsByDescription,
-  type ImportedRow,
-  type ColumnMapping,
-  type ParsedTransaction,
-  type TransactionGroup,
 } from "../utils/smartImport";
 import { addTransaction, loadCategories, addCategory } from "../utils/storage";
 import type { Category } from "../types";
-
-type ImportStep =
-  | "upload"
-  | "mapping"
-  | "duplicates"
-  | "bulk-edit"
-  | "confirm"
-  | "complete";
+import { UploadStep, MappingStep } from "./import-wizard";
+import type {
+  ImportStep,
+  ImportedRow,
+  ColumnMapping,
+  ParsedTransaction,
+  TransactionGroup,
+} from "./import-wizard";
 
 interface ImportWizardProps {
   onComplete: () => void;
@@ -351,45 +344,18 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
     }
   };
 
-  const renderUploadStep = () => (
-    <div className="import-step">
-      <div className="step-header">
-        <FileText size={32} className="step-icon" />
-        <h3>Upload CSV File</h3>
-        <p>Select a CSV file exported from your bank</p>
-      </div>
-
-      <div className="upload-area">
-        <label className="upload-dropzone">
-          <Upload size={48} />
-          <p>
-            <strong>Click to select</strong> your bank CSV file
-          </p>
-          <p className="upload-hint">
-            Supports various bank formats with automatic column detection
-          </p>
-          <input
-            type="file"
-            accept=".csv,.txt"
-            onChange={handleFileUpload}
-            className="hidden-file-input"
-          />
-        </label>
-      </div>
-
-      <div className="format-hints">
-        <h4>Supported Formats:</h4>
-        <ul>
-          <li>✅ Date formats: YYYY-MM-DD, MM/DD/YYYY, DD/MM/YYYY</li>
-          <li>✅ Amount formats: $123.45, (123.45), -123.45</li>
-          <li>✅ Various column names automatically detected</li>
-          <li>✅ Both positive and negative amounts</li>
-        </ul>
-      </div>
-    </div>
-  );
+  const renderUploadStep = () => <UploadStep onFileUpload={handleFileUpload} />;
 
   const renderMappingStep = () => (
+    <MappingStep
+      csvData={csvData}
+      columnMapping={columnMapping}
+      onColumnMappingChange={setColumnMapping}
+      onNext={handleMappingConfirm}
+    />
+  );
+
+  const renderMappingStepOld = () => (
     <div className="import-step">
       <div className="step-header">
         <Edit3 size={32} className="step-icon" />
