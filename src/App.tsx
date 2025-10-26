@@ -7,6 +7,7 @@ import TransactionHistory from './components/TransactionHistory.tsx'
 import Budget from './components/Budget.tsx'
 import SettingsComponent from './components/Settings'
 import { initializeMockData } from './utils/mockData'
+import leafIcon from './assets/leaf.svg'
 import './App.css'
 
 type TabType = 'dashboard' | 'add' | 'analytics' | 'history' | 'budget' | 'settings'
@@ -115,7 +116,7 @@ function App() {
         <div className="app-header-container">
           <div className="app-header-content">
             <h1 className="app-title">
-              <span className="app-icon">🌿</span>
+              <img src={leafIcon} alt="Basil" className="app-icon" />
               Basil
             </h1>
             <div className="header-buttons">
@@ -204,7 +205,7 @@ function App() {
           <div className="modal-content help-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>
-                <span className="app-icon">🌿</span>
+                <img src={leafIcon} alt="Basil" className="app-icon" />
                 About Basil
               </h2>
               <button 
@@ -219,7 +220,7 @@ function App() {
             <div className="modal-body">
               <div className="help-section">
                 <p className="help-intro">
-                  <strong>🌿 Basil - Your personal, private, finance companion</strong>
+                  <strong><img src={leafIcon} alt="Basil" className="app-icon inline" /> Basil - Your personal, private, finance companion</strong>
                 </p>
                 <p className="privacy-note">
                   Basil keeps your financial data completely private. Everything is stored locally on your device - 

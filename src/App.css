@@ -231,6 +231,16 @@ html, body {
 
 .app-icon {
   font-size: 1.8rem;
+  width: 1.8rem;
+  height: 1.8rem;
+  display: inline-block;
+}
+
+.app-icon.inline {
+  width: 1.2rem;
+  height: 1.2rem;
+  vertical-align: middle;
+  margin-right: 0.25rem;
 }
 
 .app-main {
@@ -2174,6 +2184,8 @@ legend.form-label {
 
 .help-modal .app-icon {
   font-size: 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .modal-close-button {
