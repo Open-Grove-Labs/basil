@@ -76,8 +76,9 @@ function loadFromStorage<T>(key: string, defaultValue: T[] = []): T[] {
   try {
     const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : defaultValue;
-  } catch (error) {
-    console.error(`Failed to load ${key} from localStorage:`, error);
+  } catch {
+    // Silently handle localStorage parsing errors and return default value
+    // This gracefully handles corrupted data without console noise
     return defaultValue;
   }
 }

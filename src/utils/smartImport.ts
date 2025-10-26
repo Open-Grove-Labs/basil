@@ -102,7 +102,8 @@ export function parseCSV(csvText: string): ImportedRow[] {
     if (values.length === headers.length) {
       const row: ImportedRow = {};
       headers.forEach((header, index) => {
-        row[header.toLowerCase().trim()] = values[index]?.trim() || "";
+        // Keep original header case for compatibility with tests
+        row[header.trim()] = values[index]?.trim() || "";
       });
       rows.push(row);
     }
@@ -173,9 +174,11 @@ export function detectColumnMappings(rows: ImportedRow[]): ColumnMapping {
       createdAtColumn: "Created At",
       isBasilCSV: true,
     };
-  } // Detect date column
+  }
+  
+  // Detect date column
   for (const header of headers) {
-    if (COLUMN_MAPPINGS.date.some((pattern) => header.includes(pattern))) {
+    if (COLUMN_MAPPINGS.date.some((pattern) => header.toLowerCase().includes(pattern))) {
       mapping.dateColumn = header;
       break;
     }
@@ -249,7 +252,7 @@ export function detectColumnMappings(rows: ImportedRow[]): ColumnMapping {
   // Detect description column
   for (const header of headers) {
     if (
-      COLUMN_MAPPINGS.description.some((pattern) => header.includes(pattern))
+      COLUMN_MAPPINGS.description.some((pattern) => header.toLowerCase().includes(pattern))
     ) {
       mapping.descriptionColumn = header;
       break;
@@ -315,12 +318,15 @@ export function parseDate(dateStr: string): string {
       }
       return null;
     },
-    // US formats MM/DD/YYYY
+    // US formats MM/DD/YYYY - only if first number could be a month
     (d: string) => {
       const match = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
       if (match) {
-        const [, month, day, year] = match;
-        return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+        const [, first, second, year] = match;
+        // Use MM/DD if first number is <= 12 and second could be a day
+        if (parseInt(first) <= 12 && parseInt(second) <= 31) {
+          return `${year}-${first.padStart(2, "0")}-${second.padStart(2, "0")}`;
+        }
       }
       return null;
     },
@@ -334,13 +340,17 @@ export function parseDate(dateStr: string): string {
       }
       return null;
     },
-    // DD/MM/YYYY format
+    // DD/MM/YYYY format - only if day > 12 (unambiguous)
     (d: string) => {
       const match = d.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
       if (match) {
         const [, first, second, year] = match;
-        // Assume DD/MM if first > 12
+        // Only use DD/MM if first number is clearly a day (> 12)
         if (parseInt(first) > 12) {
+          return `${year}-${second.padStart(2, "0")}-${first.padStart(2, "0")}`;
+        }
+        // For ambiguous cases like 15/01, also check if it makes sense as DD/MM
+        if (parseInt(first) <= 31 && parseInt(second) <= 12) {
           return `${year}-${second.padStart(2, "0")}-${first.padStart(2, "0")}`;
         }
       }
@@ -363,7 +373,8 @@ export function parseDate(dateStr: string): string {
     // Ignore parsing errors
   }
 
-  return cleaned; // Return as-is if all parsing fails
+  // Return empty string for invalid dates
+  return "";
 }
 
 export function parseAmount(amountStr: string): number {
@@ -432,6 +443,7 @@ export function determineTransactionType(
   const incomeKeywords = [
     "salary",
     "paycheck",
+    "payroll",
     "wage",
     "bonus",
     "refund",
@@ -439,6 +451,7 @@ export function determineTransactionType(
     "interest",
     "dividend",
     "freelance",
+    "transfer in",
   ];
   if (incomeKeywords.some((keyword) => desc.includes(keyword))) {
     return "income";
@@ -683,22 +696,19 @@ export function groupTransactionsByDescription(
   // Convert to array and add suggestions
   const result: TransactionGroup[] = [];
   for (const [groupKey, transactions] of groups) {
-    if (transactions.length > 1) {
-      // Only group if multiple transactions
-      // Clean the description by removing the duplicate suffix
-      const description = groupKey.replace("__DUPLICATE", "");
-      const isDuplicateGroup = groupKey.includes("__DUPLICATE");
+    // Clean the description by removing the duplicate suffix
+    const description = groupKey.replace("__DUPLICATE", "");
+    const isDuplicateGroup = groupKey.includes("__DUPLICATE");
 
-      result.push({
-        description: isDuplicateGroup
-          ? `${description} (Duplicates)`
-          : description,
-        transactions,
-        suggestedType: getMostCommonType(transactions),
-        suggestedCategory: getMostCommonCategory(transactions),
-        includeInImport: true,
-      });
-    }
+    result.push({
+      description: isDuplicateGroup
+        ? `${description} (Duplicates)`
+        : description,
+      transactions,
+      suggestedType: getMostCommonType(transactions),
+      suggestedCategory: getMostCommonCategory(transactions),
+      includeInImport: true,
+    });
   }
 
   return result.sort((a, b) => b.transactions.length - a.transactions.length); // Sort by group size
