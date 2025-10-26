@@ -142,7 +142,8 @@ function App() {
           <div className="app-header-content">
             <h1 className="app-title">
               <img src={leafIcon} alt="Basil" className="app-icon" />
-              Basil
+              <span className="title">Basil</span>
+              <span className="alpha-badge">ALPHA</span>
             </h1>
             <div className="header-buttons">
               <button
@@ -254,6 +255,10 @@ function App() {
                     />{" "}
                     Basil - Your personal, private, finance companion
                   </strong>
+                </p>
+                <p className="version-info">
+                  <strong>Version 0.0.16 Alpha</strong> - This app is under active development. 
+                  Features may change and you may encounter bugs. We appreciate your feedback!
                 </p>
                 <p className="privacy-note">
                   Basil keeps your financial data completely private. Everything
