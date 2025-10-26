@@ -14,7 +14,7 @@ import {
   detectColumnMappings,
   processImportedTransactions,
   groupTransactionsByDescription,
-} from "../utils/smartImport";
+} from "../utils/smart-import";
 import { addTransaction, loadCategories, addCategory } from "../utils/storage";
 import type { Category } from "../types";
 import { UploadStep, MappingStep } from "./import-wizard";

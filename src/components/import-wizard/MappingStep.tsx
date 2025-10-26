@@ -1,5 +1,5 @@
 import { Edit3, ArrowRight } from "lucide-react";
-import type { ColumnMapping, ImportedRow } from "../../utils/smartImport";
+import type { ColumnMapping, ImportedRow } from "../../utils/smart-import";
 
 interface MappingStepProps {
   csvData: ImportedRow[];

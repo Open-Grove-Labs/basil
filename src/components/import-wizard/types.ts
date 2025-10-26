@@ -3,7 +3,7 @@ import type {
   ColumnMapping,
   ParsedTransaction,
   TransactionGroup,
-} from "../../utils/smartImport";
+} from "../../utils/smart-import";
 
 export type ImportStep = "upload" | "mapping" | "duplicates" | "bulk-edit" | "confirm" | "complete";
 
