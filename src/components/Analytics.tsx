@@ -23,26 +23,36 @@ import {
   isWithinInterval,
 } from "date-fns";
 import { BarChart3, PieChart as PieChartIcon } from "lucide-react";
-import { loadTransactions, loadCategories, parseLocalDate } from '../utils/storage'
+import {
+  loadTransactions,
+  loadCategories,
+  parseLocalDate,
+} from "../utils/storage";
 import type { Transaction, CategorySpending, SpendingTrend } from "../types";
 import { formatCurrency } from "../utils/currency";
 
 type MonthlyCategoryData = {
   date: string;
   [categoryName: string]: string | number; // date as string, categories as numbers
-}
+};
 
 function Analytics() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categorySpending, setCategorySpending] = useState<CategorySpending[]>(
-    []
+    [],
   );
   const [monthlyTrends, setMonthlyTrends] = useState<SpendingTrend[]>([]);
-  const [monthlyCategoryBreakdown, setMonthlyCategoryBreakdown] = useState<MonthlyCategoryData[]>([]);
-  const [timeRange, setTimeRange] = useState<"3m" | "6m" | "1y" | "2y" | "3y">("6m");
+  const [monthlyCategoryBreakdown, setMonthlyCategoryBreakdown] = useState<
+    MonthlyCategoryData[]
+  >([]);
+  const [timeRange, setTimeRange] = useState<"3m" | "6m" | "1y" | "2y" | "3y">(
+    "6m",
+  );
   const [chartType, setChartType] = useState<"pie" | "bar">("pie");
   const [projectionTrends, setProjectionTrends] = useState<SpendingTrend[]>([]);
-  const [availableTimeRanges, setAvailableTimeRanges] = useState<Array<"3m" | "6m" | "1y" | "2y" | "3y">>(["3m", "6m", "1y"]);
+  const [availableTimeRanges, setAvailableTimeRanges] = useState<
+    Array<"3m" | "6m" | "1y" | "2y" | "3y">
+  >(["3m", "6m", "1y"]);
 
   // Calculate available time ranges based on transaction history
   const getAvailableTimeRanges = useCallback(() => {
@@ -53,14 +63,20 @@ function Analytics() {
 
     // Find oldest transaction
     const oldestDate = allTransactions
-      .map(t => parseLocalDate(t.date))
-      .reduce((oldest, current) => current < oldest ? current : oldest);
-    
-    const now = new Date();
-    const monthsOfHistory = Math.floor((now.getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44)); // Average month length
+      .map((t) => parseLocalDate(t.date))
+      .reduce((oldest, current) => (current < oldest ? current : oldest));
 
-    const availableRanges: Array<"3m" | "6m" | "1y" | "2y" | "3y"> = ["3m", "6m", "1y"];
-    
+    const now = new Date();
+    const monthsOfHistory = Math.floor(
+      (now.getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44),
+    ); // Average month length
+
+    const availableRanges: Array<"3m" | "6m" | "1y" | "2y" | "3y"> = [
+      "3m",
+      "6m",
+      "1y",
+    ];
+
     if (monthsOfHistory >= 24) {
       availableRanges.push("2y");
     }
@@ -81,26 +97,31 @@ function Analytics() {
 
     // Filter transactions based on time range
     const now = new Date();
-    const months = timeRange === "3m" ? 3 
-      : timeRange === "6m" ? 6 
-      : timeRange === "1y" ? 12
-      : timeRange === "2y" ? 24
-      : 36; // 3y
+    const months =
+      timeRange === "3m"
+        ? 3
+        : timeRange === "6m"
+          ? 6
+          : timeRange === "1y"
+            ? 12
+            : timeRange === "2y"
+              ? 24
+              : 36; // 3y
     const startDate = subMonths(now, months);
 
     const filteredTransactions = allTransactions.filter(
-      (t) => parseLocalDate(t.date) >= startDate
+      (t) => parseLocalDate(t.date) >= startDate,
     );
 
     setTransactions(filteredTransactions);
 
     // Calculate category spending
     const expenseTransactions = filteredTransactions.filter(
-      (t) => t.type === "expense"
+      (t) => t.type === "expense",
     );
     const totalExpenses = expenseTransactions.reduce(
       (sum, t) => sum + t.amount,
-      0
+      0,
     );
 
     const categoryTotals = new Map<string, number>();
@@ -113,7 +134,7 @@ function Analytics() {
     });
 
     const categoryData: CategorySpending[] = Array.from(
-      categoryTotals.entries()
+      categoryTotals.entries(),
     )
       .map(([categoryName, amount]) => {
         const category = categories.find((c) => c.name === categoryName);
@@ -136,13 +157,16 @@ function Analytics() {
     // Calculate monthly trends with cumulative net balance
     const trends: SpendingTrend[] = [];
     let cumulativeBalance = 0;
-    
+
     for (let i = months - 1; i >= 0; i--) {
       const monthStart = startOfMonth(subMonths(now, i));
       const monthEnd = endOfMonth(subMonths(now, i));
 
       const monthTransactions = filteredTransactions.filter((t) =>
-        isWithinInterval(parseLocalDate(t.date), { start: monthStart, end: monthEnd })
+        isWithinInterval(parseLocalDate(t.date), {
+          start: monthStart,
+          end: monthEnd,
+        }),
       );
 
       const monthIncome = monthTransactions
@@ -154,10 +178,10 @@ function Analytics() {
         .reduce((sum, t) => sum + t.amount, 0);
 
       const monthBalance = monthIncome - monthExpenses;
-      
+
       // Add this month's net balance to the cumulative total
       cumulativeBalance += monthBalance;
-      
+
       trends.push({
         date: format(monthStart, "MMM yyyy"),
         income: monthIncome,
@@ -172,33 +196,39 @@ function Analytics() {
 
     // Calculate monthly category breakdown for stacked area chart
     const categoryBreakdown: MonthlyCategoryData[] = [];
-    
+
     // Get all unique expense categories
     const allCategories = new Set<string>();
     filteredTransactions
-      .filter(t => t.type === 'expense' && t.category && t.category.trim() !== '')
-      .forEach(t => allCategories.add(t.category));
-    
+      .filter(
+        (t) => t.type === "expense" && t.category && t.category.trim() !== "",
+      )
+      .forEach((t) => allCategories.add(t.category));
+
     // Calculate spending by category for each month
     for (let i = months - 1; i >= 0; i--) {
       const monthStart = startOfMonth(subMonths(now, i));
       const monthEnd = endOfMonth(subMonths(now, i));
 
-      const monthTransactions = filteredTransactions.filter((t) =>
-        t.type === 'expense' && 
-        t.category && 
-        t.category.trim() !== '' &&
-        isWithinInterval(parseLocalDate(t.date), { start: monthStart, end: monthEnd })
+      const monthTransactions = filteredTransactions.filter(
+        (t) =>
+          t.type === "expense" &&
+          t.category &&
+          t.category.trim() !== "" &&
+          isWithinInterval(parseLocalDate(t.date), {
+            start: monthStart,
+            end: monthEnd,
+          }),
       );
 
       const monthData: MonthlyCategoryData = {
-        date: format(monthStart, "MMM yyyy")
+        date: format(monthStart, "MMM yyyy"),
       };
 
       // Calculate spending for each category in this month
-      allCategories.forEach(category => {
+      allCategories.forEach((category) => {
         const categorySpending = monthTransactions
-          .filter(t => t.category === category)
+          .filter((t) => t.category === category)
           .reduce((sum, t) => sum + t.amount, 0);
         monthData[category] = categorySpending;
       });
@@ -213,29 +243,33 @@ function Analytics() {
       // Calculate averages from recent data (use last 3 months or available data)
       const recentCount = Math.min(3, trends.length);
       const recentTrends = trends.slice(-recentCount);
-      const avgIncome = recentTrends.reduce((sum, t) => sum + (t.income || 0), 0) / recentTrends.length;
-      const avgExpenses = recentTrends.reduce((sum, t) => sum + (t.expenses || 0), 0) / recentTrends.length;
-      
+      const avgIncome =
+        recentTrends.reduce((sum, t) => sum + (t.income || 0), 0) /
+        recentTrends.length;
+      const avgExpenses =
+        recentTrends.reduce((sum, t) => sum + (t.expenses || 0), 0) /
+        recentTrends.length;
+
       // Create combined historical and projected data
       const projections: SpendingTrend[] = [];
-      
+
       // Add historical data
-      trends.forEach(trend => {
-        projections.push({ 
-          ...trend, 
+      trends.forEach((trend) => {
+        projections.push({
+          ...trend,
           isProjection: false,
           projectedIncome: null,
           projectedExpenses: null,
           projectedBalance: null,
-          projectedCumulativeBalance: null
+          projectedCumulativeBalance: null,
         });
       });
-      
+
       // Add bridge point (last historical point as first projection point)
       const lastTrend = trends[trends.length - 1];
       const avgBalance = avgIncome - avgExpenses;
       let projectedCumulativeBalance = lastTrend.cumulativeBalance || 0;
-      
+
       projections.push({
         date: lastTrend.date,
         income: null,
@@ -246,14 +280,14 @@ function Analytics() {
         projectedExpenses: avgExpenses,
         projectedBalance: avgBalance,
         projectedCumulativeBalance: projectedCumulativeBalance,
-        isProjection: true
+        isProjection: true,
       });
-      
+
       // Add future projections
       for (let i = 1; i <= months; i++) {
         const futureDate = format(subMonths(now, -i), "MMM yyyy");
         projectedCumulativeBalance += avgBalance; // Accumulate net balance - this shows the financial trajectory!
-        
+
         projections.push({
           date: futureDate,
           income: null,
@@ -264,10 +298,10 @@ function Analytics() {
           projectedExpenses: avgExpenses,
           projectedBalance: avgBalance,
           projectedCumulativeBalance: projectedCumulativeBalance,
-          isProjection: true
+          isProjection: true,
         });
       }
-      
+
       setProjectionTrends(projections);
     } else {
       setProjectionTrends([]);
@@ -279,22 +313,28 @@ function Analytics() {
   }, [loadAnalyticsData]);
 
   // Wrapper functions for chart formatters
-  const formatCurrencyForChart = (value: number) => formatCurrency(value)
-
-
+  const formatCurrencyForChart = (value: number) => formatCurrency(value);
 
   const totalExpenses = categorySpending.reduce(
     (sum, cat) => sum + cat.amount,
-    0
+    0,
   );
   const totalIncome = transactions
     .filter((t) => t.type === "income")
     .reduce((sum, t) => sum + t.amount, 0);
 
   // Calculate projection totals if available
-  const projectedData = projectionTrends.filter(t => t.isProjection && t.projectedIncome !== null);
-  const projectedTotalIncome = projectedData.reduce((sum, t) => sum + (t.projectedIncome || 0), 0);
-  const projectedTotalExpenses = projectedData.reduce((sum, t) => sum + (t.projectedExpenses || 0), 0);
+  const projectedData = projectionTrends.filter(
+    (t) => t.isProjection && t.projectedIncome !== null,
+  );
+  const projectedTotalIncome = projectedData.reduce(
+    (sum, t) => sum + (t.projectedIncome || 0),
+    0,
+  );
+  const projectedTotalExpenses = projectedData.reduce(
+    (sum, t) => sum + (t.projectedExpenses || 0),
+    0,
+  );
 
   return (
     <div className="page-content">
@@ -311,12 +351,12 @@ function Analytics() {
               {range === "3m"
                 ? "3 Months"
                 : range === "6m"
-                ? "6 Months"
-                : range === "1y"
-                ? "1 Year"
-                : range === "2y"
-                ? "2 Years"
-                : "3 Years"}
+                  ? "6 Months"
+                  : range === "1y"
+                    ? "1 Year"
+                    : range === "2y"
+                      ? "2 Years"
+                      : "3 Years"}
             </button>
           ))}
         </div>
@@ -384,10 +424,10 @@ function Analytics() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis tickFormatter={formatCurrencyForChart} />
-                <Tooltip 
+                <Tooltip
                   formatter={(value: number, name: string) => [
-                    formatCurrency(value), 
-                    name
+                    formatCurrency(value),
+                    name,
                   ]}
                   labelFormatter={(label) => `${label}`}
                 />
@@ -414,8 +454,9 @@ function Analytics() {
         <div className="card">
           <h3 className="card-title">Net Worth Trajectory</h3>
           <p className="card-subtitle">
-            Track your cumulative financial position over time. The thick green line shows your net worth trajectory - 
-            if it's trending up, you're building wealth; if down, you may need to adjust spending.
+            Track your cumulative financial position over time. The thick green
+            line shows your net worth trajectory - if it's trending up, you're
+            building wealth; if down, you may need to adjust spending.
           </p>
           <div className="chart-container">
             <ResponsiveContainer width="100%" height={350}>
@@ -423,14 +464,14 @@ function Analytics() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis tickFormatter={formatCurrencyForChart} />
-                <Tooltip 
+                <Tooltip
                   formatter={(value: number, name: string) => [
-                    formatCurrency(value), 
-                    name
+                    formatCurrency(value),
+                    name,
                   ]}
                   labelFormatter={(label, payload) => {
                     const isProjected = payload?.[0]?.payload?.isProjection;
-                    return `${label}${isProjected ? ' (Projected)' : ''}`;
+                    return `${label}${isProjected ? " (Projected)" : ""}`;
                   }}
                 />
                 {/* Historical Lines */}
@@ -482,49 +523,73 @@ function Analytics() {
               <span>Projected Averages</span>
             </div>
           </div>
-          
+
           {/* Projection Summary */}
           {projectedData.length > 0 && (
             <div className="projection-summary">
               <h4 className="projection-title">
-                Projected Totals ({
-                  timeRange === "3m" ? "Next 3 Months" 
-                  : timeRange === "6m" ? "Next 6 Months" 
-                  : timeRange === "1y" ? "Next Year"
-                  : timeRange === "2y" ? "Next 2 Years"
-                  : "Next 3 Years"
-                })
+                Projected Totals (
+                {timeRange === "3m"
+                  ? "Next 3 Months"
+                  : timeRange === "6m"
+                    ? "Next 6 Months"
+                    : timeRange === "1y"
+                      ? "Next Year"
+                      : timeRange === "2y"
+                        ? "Next 2 Years"
+                        : "Next 3 Years"}
+                )
               </h4>
               <div className="projection-stats">
                 <div className="projection-stat balance">
-                  <span>Avg Monthly Net: {formatCurrency((projectedTotalIncome - projectedTotalExpenses) / Math.max(1, projectedData.length))}</span>
+                  <span>
+                    Avg Monthly Net:{" "}
+                    {formatCurrency(
+                      (projectedTotalIncome - projectedTotalExpenses) /
+                        Math.max(1, projectedData.length),
+                    )}
+                  </span>
                 </div>
               </div>
-              
+
               {/* Net Worth Trajectory Summary */}
               <div className="savings-trajectory">
                 <div className="trajectory-info">
                   <strong>Net Worth Trajectory:</strong>
                   {(() => {
-                    const currentNetWorth = projectionTrends.find(t => !t.isProjection && t.cumulativeBalance !== null)?.cumulativeBalance || 0;
-                    const finalProjectedNetWorth = projectedData.length > 0 ? projectedData[projectedData.length - 1].projectedCumulativeBalance || 0 : 0;
-                    
+                    const currentNetWorth =
+                      projectionTrends.find(
+                        (t) => !t.isProjection && t.cumulativeBalance !== null,
+                      )?.cumulativeBalance || 0;
+                    const finalProjectedNetWorth =
+                      projectedData.length > 0
+                        ? projectedData[projectedData.length - 1]
+                            .projectedCumulativeBalance || 0
+                        : 0;
+
                     if (finalProjectedNetWorth > currentNetWorth) {
                       return (
                         <span className="trajectory-positive">
-                          📈 Growing by {formatCurrency(finalProjectedNetWorth - currentNetWorth)}
+                          📈 Growing by{" "}
+                          {formatCurrency(
+                            finalProjectedNetWorth - currentNetWorth,
+                          )}
                         </span>
                       );
                     } else if (finalProjectedNetWorth < currentNetWorth) {
                       return (
                         <span className="trajectory-negative">
-                          📉 Declining by {formatCurrency(currentNetWorth - finalProjectedNetWorth)}
+                          📉 Declining by{" "}
+                          {formatCurrency(
+                            currentNetWorth - finalProjectedNetWorth,
+                          )}
                         </span>
                       );
                     } else {
                       return (
                         <span className="trajectory-stable">
-                          ➡️ Remaining stable at {formatCurrency(currentNetWorth)}
+                          ➡️ Remaining stable at{" "}
+                          {formatCurrency(currentNetWorth)}
                         </span>
                       );
                     }
@@ -532,13 +597,25 @@ function Analytics() {
                 </div>
                 <div className="trajectory-details">
                   {(() => {
-                    const currentNetWorth = projectionTrends.find(t => !t.isProjection && t.cumulativeBalance !== null)?.cumulativeBalance || 0;
-                    const finalProjectedNetWorth = projectedData.length > 0 ? projectedData[projectedData.length - 1].projectedCumulativeBalance || 0 : 0;
-                    
+                    const currentNetWorth =
+                      projectionTrends.find(
+                        (t) => !t.isProjection && t.cumulativeBalance !== null,
+                      )?.cumulativeBalance || 0;
+                    const finalProjectedNetWorth =
+                      projectedData.length > 0
+                        ? projectedData[projectedData.length - 1]
+                            .projectedCumulativeBalance || 0
+                        : 0;
+
                     return (
                       <>
-                        <span>Current Net Worth: {formatCurrency(currentNetWorth)}</span>
-                        <span>Projected Net Worth: {formatCurrency(finalProjectedNetWorth)}</span>
+                        <span>
+                          Current Net Worth: {formatCurrency(currentNetWorth)}
+                        </span>
+                        <span>
+                          Projected Net Worth:{" "}
+                          {formatCurrency(finalProjectedNetWorth)}
+                        </span>
                       </>
                     );
                   })()}
@@ -574,10 +651,16 @@ function Analytics() {
 
           {categorySpending.length > 0 ? (
             <>
-              <div className="chart-container" role="img" aria-labelledby="category-chart-description">
+              <div
+                className="chart-container"
+                role="img"
+                aria-labelledby="category-chart-description"
+              >
                 <div id="category-chart-description" className="sr-only">
-                  Category spending chart showing {categorySpending.length} categories. 
-                  {chartType === "pie" ? "Pie chart" : "Bar chart"} displaying spending amounts and percentages.
+                  Category spending chart showing {categorySpending.length}{" "}
+                  categories.
+                  {chartType === "pie" ? "Pie chart" : "Bar chart"} displaying
+                  spending amounts and percentages.
                 </div>
                 <ResponsiveContainer
                   width="100%"
@@ -635,7 +718,9 @@ function Analytics() {
 
               {/* Data Table Alternative for Screen Readers */}
               <table className="sr-only" aria-label="Category spending data">
-                <caption>Category spending breakdown for selected time period</caption>
+                <caption>
+                  Category spending breakdown for selected time period
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">Category</th>

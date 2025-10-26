@@ -1,266 +1,315 @@
-import { useState, useEffect } from 'react'
-import { Target, TrendingDown, Calculator, Save, X } from 'lucide-react'
-import { loadTransactions, loadCategories, loadSettings } from '../utils/storage'
-import { subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
-import { parseLocalDate } from '../utils/storage'
-import type { Transaction, Category, CurrencyConfig } from '../types'
-import { formatCurrency } from '../utils/currency'
+import { useState, useEffect } from "react";
+import { Target, TrendingDown, Calculator, Save, X } from "lucide-react";
+import {
+  loadTransactions,
+  loadCategories,
+  loadSettings,
+} from "../utils/storage";
+import {
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  isWithinInterval,
+} from "date-fns";
+import { parseLocalDate } from "../utils/storage";
+import type { Transaction, Category, CurrencyConfig } from "../types";
+import { formatCurrency } from "../utils/currency";
 
 interface BudgetItem {
-  categoryId: string
-  categoryName: string
-  limit: number
-  spent: number
-  remaining: number
+  categoryId: string;
+  categoryName: string;
+  limit: number;
+  spent: number;
+  remaining: number;
 }
 
 interface BudgetData {
-  categoryId: string
-  limit: number
+  categoryId: string;
+  limit: number;
 }
 
-type BudgetTarget = 'stabilize' | 'reduce'
+type BudgetTarget = "stabilize" | "reduce";
 
 function Budget() {
-  const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([])
-  const [budgetData, setBudgetData] = useState<BudgetData[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [currency] = useState<CurrencyConfig>(() => loadSettings().currency)
-  const [editingCategories, setEditingCategories] = useState<Set<string>>(new Set())
-  const [editingLimits, setEditingLimits] = useState<Record<string, string>>({})
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const [selectedTarget, setSelectedTarget] = useState<BudgetTarget>('stabilize')
+  const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
+  const [budgetData, setBudgetData] = useState<BudgetData[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [currency] = useState<CurrencyConfig>(() => loadSettings().currency);
+  const [editingCategories, setEditingCategories] = useState<Set<string>>(
+    new Set(),
+  );
+  const [editingLimits, setEditingLimits] = useState<Record<string, string>>(
+    {},
+  );
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedTarget, setSelectedTarget] =
+    useState<BudgetTarget>("stabilize");
 
   // Categories that get 10% reduction in "reduce expenses" mode
   const REDUCIBLE_CATEGORIES = [
-    'Food & Dining', 'Shopping', 'Entertainment', 'Subscription', 
-    'Home Improvement', 'Personal Care'
-  ]
+    "Food & Dining",
+    "Shopping",
+    "Entertainment",
+    "Subscription",
+    "Home Improvement",
+    "Personal Care",
+  ];
 
   useEffect(() => {
-    loadData()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    loadData();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = () => {
-    const allTransactions = loadTransactions()
-    const allCategories = loadCategories()
-    const savedBudgets = JSON.parse(localStorage.getItem('basil_budgets') || '[]')
+    const allTransactions = loadTransactions();
+    const allCategories = loadCategories();
+    const savedBudgets = JSON.parse(
+      localStorage.getItem("basil_budgets") || "[]",
+    );
 
-    setTransactions(allTransactions)
-    setCategories(allCategories)
-    setBudgetData(savedBudgets)
+    setTransactions(allTransactions);
+    setCategories(allCategories);
+    setBudgetData(savedBudgets);
 
-    calculateBudgetItems(allTransactions, allCategories, savedBudgets)
-  }
+    calculateBudgetItems(allTransactions, allCategories, savedBudgets);
+  };
 
   const calculateBudgetItems = (
-    transactions: Transaction[], 
-    categories: Category[], 
-    budgets: BudgetData[]
+    transactions: Transaction[],
+    categories: Category[],
+    budgets: BudgetData[],
   ) => {
-    const currentMonth = new Date()
-    const monthStart = startOfMonth(currentMonth)
-    const monthEnd = endOfMonth(currentMonth)
+    const currentMonth = new Date();
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
 
     // Get current month's spending by category
     const currentSpending = transactions
-      .filter(t => 
-        t.type === 'expense' && 
-        isWithinInterval(parseLocalDate(t.date), { start: monthStart, end: monthEnd })
+      .filter(
+        (t) =>
+          t.type === "expense" &&
+          isWithinInterval(parseLocalDate(t.date), {
+            start: monthStart,
+            end: monthEnd,
+          }),
       )
-      .reduce((acc, t) => {
-        acc[t.category] = (acc[t.category] || 0) + t.amount
-        return acc
-      }, {} as Record<string, number>)
+      .reduce(
+        (acc, t) => {
+          acc[t.category] = (acc[t.category] || 0) + t.amount;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
 
     // Create budget items for expense categories
     const items: BudgetItem[] = categories
-      .filter(cat => cat.type === 'expense')
-      .map(cat => {
-        const budget = budgets.find(b => b.categoryId === cat.id)
-        const spent = currentSpending[cat.name] || 0
-        const limit = budget?.limit || 0
+      .filter((cat) => cat.type === "expense")
+      .map((cat) => {
+        const budget = budgets.find((b) => b.categoryId === cat.id);
+        const spent = currentSpending[cat.name] || 0;
+        const limit = budget?.limit || 0;
 
         return {
           categoryId: cat.id,
           categoryName: cat.name,
           limit,
           spent,
-          remaining: limit - spent
-        }
+          remaining: limit - spent,
+        };
       })
-      .sort((a, b) => b.limit - a.limit) // Sort by budget amount (highest first)
+      .sort((a, b) => b.limit - a.limit); // Sort by budget amount (highest first)
 
-    setBudgetItems(items)
-  }
+    setBudgetItems(items);
+  };
 
-  const calculateAverageSpending = (categoryName: string, months: number = 3) => {
-    const now = new Date()
-    const startDate = startOfMonth(subMonths(now, months))
-    const endDate = endOfMonth(subMonths(now, 1)) // Exclude current month
+  const calculateAverageSpending = (
+    categoryName: string,
+    months: number = 3,
+  ) => {
+    const now = new Date();
+    const startDate = startOfMonth(subMonths(now, months));
+    const endDate = endOfMonth(subMonths(now, 1)); // Exclude current month
 
-    const relevantTransactions = transactions.filter(t =>
-      t.type === 'expense' &&
-      t.category === categoryName &&
-      isWithinInterval(parseLocalDate(t.date), { start: startDate, end: endDate })
-    )
+    const relevantTransactions = transactions.filter(
+      (t) =>
+        t.type === "expense" &&
+        t.category === categoryName &&
+        isWithinInterval(parseLocalDate(t.date), {
+          start: startDate,
+          end: endDate,
+        }),
+    );
 
+    if (relevantTransactions.length === 0) return 0;
 
-
-    if (relevantTransactions.length === 0) return 0
-
-    const totalSpent = relevantTransactions.reduce((sum, t) => sum + t.amount, 0)
-    return Math.round(totalSpent / months)
-  }
+    const totalSpent = relevantTransactions.reduce(
+      (sum, t) => sum + t.amount,
+      0,
+    );
+    return Math.round(totalSpent / months);
+  };
 
   const generateSuggestions = (target: BudgetTarget) => {
-    const suggestions: Record<string, number> = {}
+    const suggestions: Record<string, number> = {};
 
-    budgetItems.forEach(item => {
-      if (target === 'reduce') {
+    budgetItems.forEach((item) => {
+      if (target === "reduce") {
         // For reduce: use 2 months average, then apply 10% reduction for certain categories
-        const avgSpending = calculateAverageSpending(item.categoryName, 2)
-        const isReducible = REDUCIBLE_CATEGORIES.includes(item.categoryName)
-        const suggestedAmount = isReducible ? Math.round(avgSpending * 0.9) : avgSpending
-        
+        const avgSpending = calculateAverageSpending(item.categoryName, 2);
+        const isReducible = REDUCIBLE_CATEGORIES.includes(item.categoryName);
+        const suggestedAmount = isReducible
+          ? Math.round(avgSpending * 0.9)
+          : avgSpending;
 
-        
-        suggestions[item.categoryId] = suggestedAmount
+        suggestions[item.categoryId] = suggestedAmount;
       } else {
         // For stabilize: use 2 months average
-        const avgSpending = calculateAverageSpending(item.categoryName, 2)
-        suggestions[item.categoryId] = avgSpending
+        const avgSpending = calculateAverageSpending(item.categoryName, 2);
+        suggestions[item.categoryId] = avgSpending;
       }
-    })
+    });
 
-    return suggestions
-  }
+    return suggestions;
+  };
 
   const handleTargetChange = (target: BudgetTarget) => {
-    setSelectedTarget(target)
-    
+    setSelectedTarget(target);
+
     // Automatically apply suggestions when target changes
-    const suggestions = generateSuggestions(target)
-    setEditingLimits(prev => ({
+    const suggestions = generateSuggestions(target);
+    setEditingLimits((prev) => ({
       ...prev,
       ...Object.fromEntries(
-        Object.entries(suggestions).map(([id, amount]) => [id, amount.toString()])
-      )
-    }))
-  }
+        Object.entries(suggestions).map(([id, amount]) => [
+          id,
+          amount.toString(),
+        ]),
+      ),
+    }));
+  };
 
   const openSuggestions = () => {
-    setShowSuggestions(true)
-    
+    setShowSuggestions(true);
+
     // Auto-apply initial suggestions based on current target
-    const suggestions = generateSuggestions(selectedTarget)
-    setEditingLimits(prev => ({
+    const suggestions = generateSuggestions(selectedTarget);
+    setEditingLimits((prev) => ({
       ...prev,
       ...Object.fromEntries(
-        Object.entries(suggestions).map(([id, amount]) => [id, amount.toString()])
-      )
-    }))
-  }
+        Object.entries(suggestions).map(([id, amount]) => [
+          id,
+          amount.toString(),
+        ]),
+      ),
+    }));
+  };
 
   const applySuggestions = () => {
-    const suggestions = generateSuggestions(selectedTarget)
-    
+    const suggestions = generateSuggestions(selectedTarget);
+
     // Create new budget data from suggestions
-    const newBudgets: BudgetData[] = Object.entries(suggestions).map(([categoryId, amount]) => ({
-      categoryId,
-      limit: amount
-    }))
+    const newBudgets: BudgetData[] = Object.entries(suggestions).map(
+      ([categoryId, amount]) => ({
+        categoryId,
+        limit: amount,
+      }),
+    );
 
     // Save to localStorage immediately
-    setBudgetData(newBudgets)
-    localStorage.setItem('basil_budgets', JSON.stringify(newBudgets))
-    
+    setBudgetData(newBudgets);
+    localStorage.setItem("basil_budgets", JSON.stringify(newBudgets));
+
     // Recalculate budget items with new limits to update the display
-    calculateBudgetItems(transactions, categories, newBudgets)
-    
+    calculateBudgetItems(transactions, categories, newBudgets);
+
     // Close the suggestions modal
-    setShowSuggestions(false)
-    
+    setShowSuggestions(false);
+
     // Clear editing state since we've saved directly
-    setEditingLimits({})
-  }
+    setEditingLimits({});
+  };
 
   const startEditingCategory = (categoryId: string) => {
-    setEditingCategories(prev => new Set([...prev, categoryId]))
-    
+    setEditingCategories((prev) => new Set([...prev, categoryId]));
+
     // Pre-populate editing limit with current value
-    const currentItem = budgetItems.find(item => item.categoryId === categoryId)
-    setEditingLimits(prev => ({
+    const currentItem = budgetItems.find(
+      (item) => item.categoryId === categoryId,
+    );
+    setEditingLimits((prev) => ({
       ...prev,
-      [categoryId]: currentItem ? currentItem.limit.toString() : ''
-    }))
-  }
+      [categoryId]: currentItem ? currentItem.limit.toString() : "",
+    }));
+  };
 
   const saveCategoryEdit = (categoryId: string) => {
-    const newLimit = parseFloat(editingLimits[categoryId]) || 0
-    
+    const newLimit = parseFloat(editingLimits[categoryId]) || 0;
+
     // Update the budget data
-    const updatedBudgets = budgetData.filter(b => b.categoryId !== categoryId)
+    const updatedBudgets = budgetData.filter(
+      (b) => b.categoryId !== categoryId,
+    );
     if (newLimit > 0) {
-      updatedBudgets.push({ categoryId, limit: newLimit })
+      updatedBudgets.push({ categoryId, limit: newLimit });
     }
-    
-    setBudgetData(updatedBudgets)
-    localStorage.setItem('basil_budgets', JSON.stringify(updatedBudgets))
-    
+
+    setBudgetData(updatedBudgets);
+    localStorage.setItem("basil_budgets", JSON.stringify(updatedBudgets));
+
     // Recalculate budget items with new limits
-    calculateBudgetItems(transactions, categories, updatedBudgets)
-    
+    calculateBudgetItems(transactions, categories, updatedBudgets);
+
     // Remove from editing state
-    setEditingCategories(prev => {
-      const newSet = new Set(prev)
-      newSet.delete(categoryId)
-      return newSet
-    })
-    
-    setEditingLimits(prev => {
-      const newLimits = { ...prev }
-      delete newLimits[categoryId]
-      return newLimits
-    })
-  }
+    setEditingCategories((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(categoryId);
+      return newSet;
+    });
+
+    setEditingLimits((prev) => {
+      const newLimits = { ...prev };
+      delete newLimits[categoryId];
+      return newLimits;
+    });
+  };
 
   const cancelCategoryEdit = (categoryId: string) => {
-    setEditingCategories(prev => {
-      const newSet = new Set(prev)
-      newSet.delete(categoryId)
-      return newSet
-    })
-    
-    setEditingLimits(prev => {
-      const newLimits = { ...prev }
-      delete newLimits[categoryId]
-      return newLimits
-    })
-  }
+    setEditingCategories((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(categoryId);
+      return newSet;
+    });
+
+    setEditingLimits((prev) => {
+      const newLimits = { ...prev };
+      delete newLimits[categoryId];
+      return newLimits;
+    });
+  };
 
   const updateLimit = (categoryId: string, value: string) => {
-    setEditingLimits(prev => ({
+    setEditingLimits((prev) => ({
       ...prev,
-      [categoryId]: value
-    }))
-  }
+      [categoryId]: value,
+    }));
+  };
 
-  const getTotalBudget = () => budgetItems.reduce((sum, item) => sum + item.limit, 0)
-  const getTotalSpent = () => budgetItems.reduce((sum, item) => sum + item.spent, 0)
-  const getTotalRemaining = () => getTotalBudget() - getTotalSpent()
+  const getTotalBudget = () =>
+    budgetItems.reduce((sum, item) => sum + item.limit, 0);
+  const getTotalSpent = () =>
+    budgetItems.reduce((sum, item) => sum + item.spent, 0);
+  const getTotalRemaining = () => getTotalBudget() - getTotalSpent();
 
   const getProgressPercentage = (spent: number, limit: number) => {
-    if (limit === 0) return 0
-    return Math.min((spent / limit) * 100, 100)
-  }
+    if (limit === 0) return 0;
+    return Math.min((spent / limit) * 100, 100);
+  };
 
   const getProgressColor = (percentage: number) => {
-    if (percentage >= 100) return 'var(--color-expense)'
-    if (percentage >= 80) return 'var(--color-warning)'
-    return 'var(--color-income)'
-  }
+    if (percentage >= 100) return "var(--color-expense)";
+    if (percentage >= 80) return "var(--color-warning)";
+    return "var(--color-income)";
+  };
 
   return (
     <div className="page-content">
@@ -268,15 +317,21 @@ function Budget() {
         <div className="budget-summary-cards">
           <div className="budget-summary-card">
             <div className="budget-summary-label">Total Budget</div>
-            <div className="budget-summary-value">{formatCurrency(getTotalBudget(), currency)}</div>
+            <div className="budget-summary-value">
+              {formatCurrency(getTotalBudget(), currency)}
+            </div>
           </div>
           <div className="budget-summary-card">
             <div className="budget-summary-label">Total Spent</div>
-            <div className="budget-summary-value expense">{formatCurrency(getTotalSpent(), currency)}</div>
+            <div className="budget-summary-value expense">
+              {formatCurrency(getTotalSpent(), currency)}
+            </div>
           </div>
           <div className="budget-summary-card">
             <div className="budget-summary-label">Remaining</div>
-            <div className={`budget-summary-value ${getTotalRemaining() >= 0 ? 'income' : 'expense'}`}>
+            <div
+              className={`budget-summary-value ${getTotalRemaining() >= 0 ? "income" : "expense"}`}
+            >
               {formatCurrency(getTotalRemaining(), currency)}
             </div>
           </div>
@@ -284,10 +339,7 @@ function Budget() {
 
         {transactions.length > 0 && (
           <div className="budget-actions">
-            <button
-              className="btn btn-secondary"
-              onClick={openSuggestions}
-            >
+            <button className="btn btn-secondary" onClick={openSuggestions}>
               <Calculator size={16} />
               Auto-Suggest Budgets
             </button>
@@ -297,8 +349,14 @@ function Budget() {
 
       {/* Auto-Suggestion Modal */}
       {showSuggestions && (
-        <div className="modal-overlay" onClick={() => setShowSuggestions(false)}>
-          <div className="modal suggestion-modal" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowSuggestions(false)}
+        >
+          <div
+            className="modal suggestion-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-header">
               <h3>Budget Suggestions</h3>
               <button
@@ -309,18 +367,23 @@ function Budget() {
                 <X size={20} />
               </button>
             </div>
-            
+
             <div className="modal-body">
-              <p>Choose a target to automatically suggest budget limits based on your recent spending history:</p>
-              
+              <p>
+                Choose a target to automatically suggest budget limits based on
+                your recent spending history:
+              </p>
+
               <div className="target-options">
                 <label className="target-option">
                   <input
                     type="radio"
                     name="target"
                     value="stabilize"
-                    checked={selectedTarget === 'stabilize'}
-                    onChange={(e) => handleTargetChange(e.target.value as BudgetTarget)}
+                    checked={selectedTarget === "stabilize"}
+                    onChange={(e) =>
+                      handleTargetChange(e.target.value as BudgetTarget)
+                    }
                   />
                   <div className="target-info">
                     <div className="target-title">
@@ -338,8 +401,10 @@ function Budget() {
                     type="radio"
                     name="target"
                     value="reduce"
-                    checked={selectedTarget === 'reduce'}
-                    onChange={(e) => handleTargetChange(e.target.value as BudgetTarget)}
+                    checked={selectedTarget === "reduce"}
+                    onChange={(e) =>
+                      handleTargetChange(e.target.value as BudgetTarget)
+                    }
                   />
                   <div className="target-info">
                     <div className="target-title">
@@ -347,7 +412,8 @@ function Budget() {
                       Reduce Expenses
                     </div>
                     <div className="target-description">
-                      Set most budgets 10% below average (Shopping, Dining, Entertainment, etc.)
+                      Set most budgets 10% below average (Shopping, Dining,
+                      Entertainment, etc.)
                     </div>
                   </div>
                 </label>
@@ -355,10 +421,7 @@ function Budget() {
             </div>
 
             <div className="modal-footer">
-              <button
-                className="btn btn-primary"
-                onClick={applySuggestions}
-              >
+              <button className="btn btn-primary" onClick={applySuggestions}>
                 Apply Suggestions
               </button>
               <button
@@ -382,8 +445,11 @@ function Budget() {
           </div>
         ) : (
           budgetItems.map((item) => {
-            const progressPercentage = getProgressPercentage(item.spent, item.limit)
-            const progressColor = getProgressColor(progressPercentage)
+            const progressPercentage = getProgressPercentage(
+              item.spent,
+              item.limit,
+            );
+            const progressColor = getProgressColor(progressPercentage);
 
             return (
               <div key={item.categoryId} className="budget-item">
@@ -391,11 +457,15 @@ function Budget() {
                   <h4 className="budget-category-name">{item.categoryName}</h4>
                   {!editingCategories.has(item.categoryId) && (
                     <div className="budget-amounts">
-                      <span className="budget-spent">{formatCurrency(item.spent, currency)}</span>
+                      <span className="budget-spent">
+                        {formatCurrency(item.spent, currency)}
+                      </span>
                       {item.limit > 0 && (
                         <>
                           <span className="budget-separator">of</span>
-                          <span className="budget-limit">{formatCurrency(item.limit, currency)}</span>
+                          <span className="budget-limit">
+                            {formatCurrency(item.limit, currency)}
+                          </span>
                         </>
                       )}
                     </div>
@@ -417,8 +487,10 @@ function Budget() {
                       <input
                         type="number"
                         className="form-input"
-                        value={editingLimits[item.categoryId] || ''}
-                        onChange={(e) => updateLimit(item.categoryId, e.target.value)}
+                        value={editingLimits[item.categoryId] || ""}
+                        onChange={(e) =>
+                          updateLimit(item.categoryId, e.target.value)
+                        }
                         placeholder="Enter budget limit"
                         min="0"
                         step="0.01"
@@ -446,13 +518,15 @@ function Budget() {
                         className="budget-progress-fill"
                         style={{
                           width: `${progressPercentage}%`,
-                          backgroundColor: progressColor
+                          backgroundColor: progressColor,
                         }}
                       />
                     </div>
                     <div className="budget-progress-info">
-                      <span className={`budget-remaining ${item.remaining >= 0 ? 'positive' : 'negative'}`}>
-                        {item.remaining >= 0 ? 'Remaining: ' : 'Over by: '}
+                      <span
+                        className={`budget-remaining ${item.remaining >= 0 ? "positive" : "negative"}`}
+                      >
+                        {item.remaining >= 0 ? "Remaining: " : "Over by: "}
                         {formatCurrency(Math.abs(item.remaining), currency)}
                       </span>
                       <span className="budget-percentage">
@@ -466,12 +540,12 @@ function Budget() {
                   </div>
                 )}
               </div>
-            )
+            );
           })
         )}
       </div>
     </div>
-  )
+  );
 }
 
-export default Budget
+export default Budget;

@@ -3,7 +3,7 @@ export interface Transaction {
   amount: number;
   description: string;
   category: string;
-  type: 'income' | 'expense';
+  type: "income" | "expense";
   date: string; // ISO string format
   createdAt: string;
 }
@@ -12,14 +12,14 @@ export interface Category {
   id: string;
   name: string;
   color: string;
-  type: 'income' | 'expense';
+  type: "income" | "expense";
 }
 
 export interface Budget {
   id: string;
   categoryId: string;
   limit: number; // Changed from 'amount' to 'limit' to match actual data
-  period?: 'monthly' | 'weekly' | 'yearly'; // Made optional since some budgets don't have this
+  period?: "monthly" | "weekly" | "yearly"; // Made optional since some budgets don't have this
 }
 
 export interface BudgetSummary {
@@ -59,10 +59,10 @@ export interface CurrencyConfig {
   code: string;
   symbol: string;
   name: string;
-  position: 'before' | 'after';
+  position: "before" | "after";
 }
 
 export interface UserSettings {
   currency: CurrencyConfig;
-  theme?: 'light' | 'dark' | 'auto';
+  theme?: "light" | "dark" | "auto";
 }

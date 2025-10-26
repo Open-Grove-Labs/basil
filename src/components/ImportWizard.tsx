@@ -1,290 +1,355 @@
-import { useState, useCallback } from 'react'
-import { Upload, FileText, CheckCircle, AlertCircle, ArrowRight, ArrowLeft, Download, Edit3, Check, X, PlusCircle } from 'lucide-react'
-import { 
-  parseCSV, 
-  detectColumnMappings, 
-  processImportedTransactions, 
+import { useState, useCallback } from "react";
+import {
+  Upload,
+  FileText,
+  CheckCircle,
+  AlertCircle,
+  ArrowRight,
+  ArrowLeft,
+  Download,
+  Edit3,
+  Check,
+  X,
+  PlusCircle,
+} from "lucide-react";
+import {
+  parseCSV,
+  detectColumnMappings,
+  processImportedTransactions,
   groupTransactionsByDescription,
-  type ImportedRow, 
-  type ColumnMapping, 
-  type ParsedTransaction, 
-  type TransactionGroup 
-} from '../utils/smartImport'
-import { addTransaction, loadCategories, addCategory } from '../utils/storage'
-import type { Category } from '../types'
+  type ImportedRow,
+  type ColumnMapping,
+  type ParsedTransaction,
+  type TransactionGroup,
+} from "../utils/smartImport";
+import { addTransaction, loadCategories, addCategory } from "../utils/storage";
+import type { Category } from "../types";
 
-type ImportStep = 'upload' | 'mapping' | 'duplicates' | 'bulk-edit' | 'confirm' | 'complete'
+type ImportStep =
+  | "upload"
+  | "mapping"
+  | "duplicates"
+  | "bulk-edit"
+  | "confirm"
+  | "complete";
 
 interface ImportWizardProps {
-  onComplete: () => void
-  onCancel: () => void
+  onComplete: () => void;
+  onCancel: () => void;
 }
 
 function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
-  const [currentStep, setCurrentStep] = useState<ImportStep>('upload')
-  const [csvData, setCsvData] = useState<ImportedRow[]>([])
+  const [currentStep, setCurrentStep] = useState<ImportStep>("upload");
+  const [csvData, setCsvData] = useState<ImportedRow[]>([]);
   const [columnMapping, setColumnMapping] = useState<ColumnMapping>({
-    dateColumn: '',
-    descriptionColumn: '',
-    amountColumn: ''
-  })
-  const [parsedTransactions, setParsedTransactions] = useState<ParsedTransaction[]>([])
-  const [transactionGroups, setTransactionGroups] = useState<TransactionGroup[]>([])
-  const [ungroupedTransactions, setUngroupedTransactions] = useState<ParsedTransaction[]>([])
-  const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set())
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [availableCategories, setAvailableCategories] = useState<Category[]>(loadCategories())
-  const [showNewCategoryInputs, setShowNewCategoryInputs] = useState<Map<number, boolean>>(new Map())
-  const [newCategoryNames, setNewCategoryNames] = useState<Map<number, string>>(new Map())
+    dateColumn: "",
+    descriptionColumn: "",
+    amountColumn: "",
+  });
+  const [parsedTransactions, setParsedTransactions] = useState<
+    ParsedTransaction[]
+  >([]);
+  const [transactionGroups, setTransactionGroups] = useState<
+    TransactionGroup[]
+  >([]);
+  const [ungroupedTransactions, setUngroupedTransactions] = useState<
+    ParsedTransaction[]
+  >([]);
+  const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(
+    new Set(),
+  );
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [availableCategories, setAvailableCategories] =
+    useState<Category[]>(loadCategories());
+  const [showNewCategoryInputs, setShowNewCategoryInputs] = useState<
+    Map<number, boolean>
+  >(new Map());
+  const [newCategoryNames, setNewCategoryNames] = useState<Map<number, string>>(
+    new Map(),
+  );
 
   // Step 1: File Upload
-  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+  const handleFileUpload = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const csvText = e.target?.result as string
-      if (csvText) {
-        const parsed = parseCSV(csvText)
-        setCsvData(parsed)
-        
-        // Auto-detect column mappings
-        const detectedMapping = detectColumnMappings(parsed)
-        setColumnMapping(detectedMapping)
-        
-        setCurrentStep('mapping')
-      }
-    }
-    reader.readAsText(file)
-  }, [])
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const csvText = e.target?.result as string;
+        if (csvText) {
+          const parsed = parseCSV(csvText);
+          setCsvData(parsed);
+
+          // Auto-detect column mappings
+          const detectedMapping = detectColumnMappings(parsed);
+          setColumnMapping(detectedMapping);
+
+          setCurrentStep("mapping");
+        }
+      };
+      reader.readAsText(file);
+    },
+    [],
+  );
 
   // Step 2: Column Mapping
   const handleMappingConfirm = () => {
     // Validate required columns
-    const hasAmountData = columnMapping.amountColumn || (columnMapping.debitColumn && columnMapping.creditColumn)
-    if (!columnMapping.dateColumn || !columnMapping.descriptionColumn || !hasAmountData) {
-      alert('Please map all required columns (Date, Description, and either Amount OR both Debit/Credit)')
-      return
+    const hasAmountData =
+      columnMapping.amountColumn ||
+      (columnMapping.debitColumn && columnMapping.creditColumn);
+    if (
+      !columnMapping.dateColumn ||
+      !columnMapping.descriptionColumn ||
+      !hasAmountData
+    ) {
+      alert(
+        "Please map all required columns (Date, Description, and either Amount OR both Debit/Credit)",
+      );
+      return;
     }
 
-    setIsProcessing(true)
-    
+    setIsProcessing(true);
+
     setTimeout(() => {
-      const processed = processImportedTransactions(csvData, columnMapping)
-      setParsedTransactions(processed)
-      
+      const processed = processImportedTransactions(csvData, columnMapping);
+      setParsedTransactions(processed);
+
       // Group ALL transactions for bulk editing (including duplicates)
-      const groups = groupTransactionsByDescription(processed)
-      
+      const groups = groupTransactionsByDescription(processed);
+
       // Set duplicate groups as excluded by default
-      groups.forEach(group => {
-        const allAreDuplicates = group.transactions.every(t => t.isDuplicate)
+      groups.forEach((group) => {
+        const allAreDuplicates = group.transactions.every((t) => t.isDuplicate);
         if (allAreDuplicates) {
-          group.includeInImport = false
+          group.includeInImport = false;
         }
-      })
-      
+      });
+
       // Get transactions that weren't grouped (single transactions)
       const groupedTransactionIds = new Set(
-        groups.flatMap(group => group.transactions.map(t => t.id))
-      )
-      const ungrouped = processed.filter(t => !groupedTransactionIds.has(t.id))
-      
-      setTransactionGroups(groups)
-      setUngroupedTransactions(ungrouped)
-      
+        groups.flatMap((group) => group.transactions.map((t) => t.id)),
+      );
+      const ungrouped = processed.filter(
+        (t) => !groupedTransactionIds.has(t.id),
+      );
+
+      setTransactionGroups(groups);
+      setUngroupedTransactions(ungrouped);
+
       // Initialize selectedTransactions to include all non-duplicates by default
       // Duplicates are unchecked by default but still visible
-      const nonDuplicateIds = processed.filter(t => !t.isDuplicate).map(t => t.id)
-      setSelectedTransactions(new Set(nonDuplicateIds))
-      
+      const nonDuplicateIds = processed
+        .filter((t) => !t.isDuplicate)
+        .map((t) => t.id);
+      setSelectedTransactions(new Set(nonDuplicateIds));
+
       // Check if there are any duplicates
-      const hasDuplicates = processed.some(t => t.isDuplicate)
-      
+      const hasDuplicates = processed.some((t) => t.isDuplicate);
+
       // Go to duplicates review step only if there are duplicates, otherwise go directly to bulk edit
-      setCurrentStep(hasDuplicates ? 'duplicates' : 'bulk-edit')
-      
-      setIsProcessing(false)
-    }, 1000)
-  }
+      setCurrentStep(hasDuplicates ? "duplicates" : "bulk-edit");
+
+      setIsProcessing(false);
+    }, 1000);
+  };
 
   // Step 3: Handle Duplicates
   const handleDuplicateReview = () => {
-    const nonDuplicates = parsedTransactions.filter(t => !t.isDuplicate || selectedTransactions.has(t.id))
-    const groups = groupTransactionsByDescription(nonDuplicates)
-    
+    const nonDuplicates = parsedTransactions.filter(
+      (t) => !t.isDuplicate || selectedTransactions.has(t.id),
+    );
+    const groups = groupTransactionsByDescription(nonDuplicates);
+
     // Get transactions that weren't grouped (single transactions)
     const groupedTransactionIds = new Set(
-      groups.flatMap(group => group.transactions.map(t => t.id))
-    )
-    const ungrouped = nonDuplicates.filter(t => !groupedTransactionIds.has(t.id))
-    
-    setTransactionGroups(groups)
-    setUngroupedTransactions(ungrouped)
-    
+      groups.flatMap((group) => group.transactions.map((t) => t.id)),
+    );
+    const ungrouped = nonDuplicates.filter(
+      (t) => !groupedTransactionIds.has(t.id),
+    );
+
+    setTransactionGroups(groups);
+    setUngroupedTransactions(ungrouped);
+
     // Initialize selectedTransactions to include all ungrouped transactions by default
-    setSelectedTransactions(new Set(ungrouped.map(t => t.id)))
-    
-    setCurrentStep('bulk-edit')
-  }
+    setSelectedTransactions(new Set(ungrouped.map((t) => t.id)));
+
+    setCurrentStep("bulk-edit");
+  };
 
   // Step 4: Bulk Edit
-  const updateTransactionGroup = (groupIndex: number, updates: { category?: string, type?: 'income' | 'expense', includeInImport?: boolean }) => {
-    const updatedGroups = [...transactionGroups]
-    const group = updatedGroups[groupIndex]
-    
+  const updateTransactionGroup = (
+    groupIndex: number,
+    updates: {
+      category?: string;
+      type?: "income" | "expense";
+      includeInImport?: boolean;
+    },
+  ) => {
+    const updatedGroups = [...transactionGroups];
+    const group = updatedGroups[groupIndex];
+
     if (updates.category !== undefined) {
-      group.suggestedCategory = updates.category
-      group.transactions.forEach(t => {
-        t.category = updates.category
-      })
+      group.suggestedCategory = updates.category;
+      group.transactions.forEach((t) => {
+        t.category = updates.category;
+      });
     }
-    
+
     if (updates.type) {
-      group.suggestedType = updates.type
-      group.transactions.forEach(t => {
-        t.type = updates.type
-      })
+      group.suggestedType = updates.type;
+      group.transactions.forEach((t) => {
+        t.type = updates.type;
+      });
     }
 
     if (updates.includeInImport !== undefined) {
-      group.includeInImport = updates.includeInImport
-      
+      group.includeInImport = updates.includeInImport;
+
       // Update selectedTransactions to reflect group inclusion
-      const newSelected = new Set(selectedTransactions)
-      group.transactions.forEach(t => {
+      const newSelected = new Set(selectedTransactions);
+      group.transactions.forEach((t) => {
         if (updates.includeInImport) {
           // Only auto-select non-duplicates when including the group
           if (!t.isDuplicate) {
-            newSelected.add(t.id)
+            newSelected.add(t.id);
           }
         } else {
           // Remove all transactions from the group when excluding
-          newSelected.delete(t.id)
+          newSelected.delete(t.id);
         }
-      })
-      setSelectedTransactions(newSelected)
+      });
+      setSelectedTransactions(newSelected);
     }
-    
-    setTransactionGroups(updatedGroups)
-  }
+
+    setTransactionGroups(updatedGroups);
+  };
 
   // Helper functions for new category management
-  const handleAddNewCategory = (groupIndex: number, type: 'income' | 'expense') => {
-    const categoryName = newCategoryNames.get(groupIndex)?.trim()
-    if (!categoryName) return
+  const handleAddNewCategory = (
+    groupIndex: number,
+    type: "income" | "expense",
+  ) => {
+    const categoryName = newCategoryNames.get(groupIndex)?.trim();
+    if (!categoryName) return;
 
     // Generate a color for the new category
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', '#FF9FF3', '#54A0FF', '#5F27CD', '#00D2D3', '#FF9F43']
-    const randomColor = colors[Math.floor(Math.random() * colors.length)]
+    const colors = [
+      "#FF6B6B",
+      "#4ECDC4",
+      "#45B7D1",
+      "#96CEB4",
+      "#FECA57",
+      "#FF9FF3",
+      "#54A0FF",
+      "#5F27CD",
+      "#00D2D3",
+      "#FF9F43",
+    ];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
     const newCategory = addCategory({
       name: categoryName,
       color: randomColor,
-      type: type
-    })
+      type: type,
+    });
 
     // Update available categories
-    setAvailableCategories(prev => [newCategory, ...prev])
-    
+    setAvailableCategories((prev) => [newCategory, ...prev]);
+
     // Apply the new category to this group
-    updateTransactionGroup(groupIndex, { category: newCategory.name })
-    
+    updateTransactionGroup(groupIndex, { category: newCategory.name });
+
     // Reset new category input for this group
-    setNewCategoryNames(prev => {
-      const updated = new Map(prev)
-      updated.delete(groupIndex)
-      return updated
-    })
-    setShowNewCategoryInputs(prev => {
-      const updated = new Map(prev)
-      updated.set(groupIndex, false)
-      return updated
-    })
-  }
+    setNewCategoryNames((prev) => {
+      const updated = new Map(prev);
+      updated.delete(groupIndex);
+      return updated;
+    });
+    setShowNewCategoryInputs((prev) => {
+      const updated = new Map(prev);
+      updated.set(groupIndex, false);
+      return updated;
+    });
+  };
 
   const toggleNewCategoryInput = (groupIndex: number, show: boolean) => {
-    setShowNewCategoryInputs(prev => {
-      const updated = new Map(prev)
-      updated.set(groupIndex, show)
-      return updated
-    })
+    setShowNewCategoryInputs((prev) => {
+      const updated = new Map(prev);
+      updated.set(groupIndex, show);
+      return updated;
+    });
     if (!show) {
-      setNewCategoryNames(prev => {
-        const updated = new Map(prev)
-        updated.delete(groupIndex)
-        return updated
-      })
+      setNewCategoryNames((prev) => {
+        const updated = new Map(prev);
+        updated.delete(groupIndex);
+        return updated;
+      });
     }
-  }
+  };
 
   const updateNewCategoryName = (groupIndex: number, name: string) => {
-    setNewCategoryNames(prev => {
-      const updated = new Map(prev)
-      updated.set(groupIndex, name)
-      return updated
-    })
-  }
+    setNewCategoryNames((prev) => {
+      const updated = new Map(prev);
+      updated.set(groupIndex, name);
+      return updated;
+    });
+  };
 
   // Helper function to update individual ungrouped transactions
-  const updateUngroupedTransaction = (transactionId: string, updates: { category?: string, type?: 'income' | 'expense' }) => {
-    setUngroupedTransactions(prev => 
-      prev.map(t => 
-        t.id === transactionId 
-          ? { ...t, ...updates }
-          : t
-      )
-    )
-    
+  const updateUngroupedTransaction = (
+    transactionId: string,
+    updates: { category?: string; type?: "income" | "expense" },
+  ) => {
+    setUngroupedTransactions((prev) =>
+      prev.map((t) => (t.id === transactionId ? { ...t, ...updates } : t)),
+    );
+
     // Also update in parsedTransactions to ensure consistency
-    setParsedTransactions(prev => 
-      prev.map(t => 
-        t.id === transactionId 
-          ? { ...t, ...updates }
-          : t
-      )
-    )
-  }
+    setParsedTransactions((prev) =>
+      prev.map((t) => (t.id === transactionId ? { ...t, ...updates } : t)),
+    );
+  };
 
   // Final Import
   const handleFinalImport = async () => {
-    setIsProcessing(true)
-    
+    setIsProcessing(true);
+
     try {
       // Get all transactions to import (from included groups + selected ungrouped)
       const allTransactionsToImport = [
         ...transactionGroups
-          .filter(group => group.includeInImport !== false)
-          .flatMap(group => group.transactions),
-        ...ungroupedTransactions.filter(t => selectedTransactions.has(t.id))
-      ] // Duplicates are already filtered out
+          .filter((group) => group.includeInImport !== false)
+          .flatMap((group) => group.transactions),
+        ...ungroupedTransactions.filter((t) => selectedTransactions.has(t.id)),
+      ]; // Duplicates are already filtered out
 
       // Import each transaction
       for (const transaction of allTransactionsToImport) {
         await addTransaction({
           amount: transaction.amount,
           description: transaction.description,
-          category: transaction.category || 'Uncategorized',
-          type: transaction.type || 'expense',
-          date: transaction.date
-        })
+          category: transaction.category || "Uncategorized",
+          type: transaction.type || "expense",
+          date: transaction.date,
+        });
       }
 
-      setCurrentStep('complete')
-      
+      setCurrentStep("complete");
+
       // Auto-complete after showing success
       setTimeout(() => {
-        onComplete()
-      }, 2000)
-      
+        onComplete();
+      }, 2000);
     } catch (error) {
-      alert('Error importing transactions. Please try again.')
-      console.error('Import error:', error)
+      alert("Error importing transactions. Please try again.");
+      console.error("Import error:", error);
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
-  }
+  };
 
   const renderUploadStep = () => (
     <div className="import-step">
@@ -293,12 +358,16 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
         <h3>Upload CSV File</h3>
         <p>Select a CSV file exported from your bank</p>
       </div>
-      
+
       <div className="upload-area">
         <label className="upload-dropzone">
           <Upload size={48} />
-          <p><strong>Click to select</strong> your bank CSV file</p>
-          <p className="upload-hint">Supports various bank formats with automatic column detection</p>
+          <p>
+            <strong>Click to select</strong> your bank CSV file
+          </p>
+          <p className="upload-hint">
+            Supports various bank formats with automatic column detection
+          </p>
           <input
             type="file"
             accept=".csv,.txt"
@@ -307,7 +376,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
           />
         </label>
       </div>
-      
+
       <div className="format-hints">
         <h4>Supported Formats:</h4>
         <ul>
@@ -318,7 +387,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
         </ul>
       </div>
     </div>
-  )
+  );
 
   const renderMappingStep = () => (
     <div className="import-step">
@@ -327,126 +396,183 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
         <h3>Map CSV Columns</h3>
         <p>Confirm how your CSV columns match our transaction fields</p>
       </div>
-      
+
       {csvData.length > 0 && (
         <>
           <div className="column-mapping">
             <div className="mapping-row">
               <label className="mapping-label">Date Column *</label>
-              <select 
+              <select
                 title="select date column from csv"
                 className="form-select"
                 value={columnMapping.dateColumn}
-                onChange={(e) => setColumnMapping({...columnMapping, dateColumn: e.target.value})}
+                onChange={(e) =>
+                  setColumnMapping({
+                    ...columnMapping,
+                    dateColumn: e.target.value,
+                  })
+                }
               >
                 <option value="">Select date column...</option>
-                {Object.keys(csvData[0]).map(col => (
-                  <option key={col} value={col}>{col}</option>
+                {Object.keys(csvData[0]).map((col) => (
+                  <option key={col} value={col}>
+                    {col}
+                  </option>
                 ))}
               </select>
             </div>
-            
+
             <div className="mapping-row">
               <label className="mapping-label">Description Column *</label>
-              <select 
+              <select
                 title="select description column from csv"
                 className="form-select"
                 value={columnMapping.descriptionColumn}
-                onChange={(e) => setColumnMapping({...columnMapping, descriptionColumn: e.target.value})}
+                onChange={(e) =>
+                  setColumnMapping({
+                    ...columnMapping,
+                    descriptionColumn: e.target.value,
+                  })
+                }
               >
                 <option value="">Select description column...</option>
-                {Object.keys(csvData[0]).map(col => (
-                  <option key={col} value={col}>{col}</option>
+                {Object.keys(csvData[0]).map((col) => (
+                  <option key={col} value={col}>
+                    {col}
+                  </option>
                 ))}
               </select>
             </div>
-            
+
             {/* Show either single amount column OR debit/credit columns */}
             {columnMapping.debitColumn || columnMapping.creditColumn ? (
               <>
                 <div className="mapping-row">
                   <label className="mapping-label">Debit Column *</label>
-                  <select 
+                  <select
                     title="select debit column from csv"
                     className="form-select"
-                    value={columnMapping.debitColumn || ''}
-                    onChange={(e) => setColumnMapping({...columnMapping, debitColumn: e.target.value || undefined})}
+                    value={columnMapping.debitColumn || ""}
+                    onChange={(e) =>
+                      setColumnMapping({
+                        ...columnMapping,
+                        debitColumn: e.target.value || undefined,
+                      })
+                    }
                   >
                     <option value="">Select debit column...</option>
-                    {Object.keys(csvData[0]).map(col => (
-                      <option key={col} value={col}>{col}</option>
+                    {Object.keys(csvData[0]).map((col) => (
+                      <option key={col} value={col}>
+                        {col}
+                      </option>
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="mapping-row">
                   <label className="mapping-label">Credit Column *</label>
-                  <select 
+                  <select
                     title="select credit column from csv"
                     className="form-select"
-                    value={columnMapping.creditColumn || ''}
-                    onChange={(e) => setColumnMapping({...columnMapping, creditColumn: e.target.value || undefined})}
+                    value={columnMapping.creditColumn || ""}
+                    onChange={(e) =>
+                      setColumnMapping({
+                        ...columnMapping,
+                        creditColumn: e.target.value || undefined,
+                      })
+                    }
                   >
                     <option value="">Select credit column...</option>
-                    {Object.keys(csvData[0]).map(col => (
-                      <option key={col} value={col}>{col}</option>
+                    {Object.keys(csvData[0]).map((col) => (
+                      <option key={col} value={col}>
+                        {col}
+                      </option>
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="mapping-note">
-                  <small>💡 Bank format detected: Debit = money out (expenses), Credit = money in (income)</small>
+                  <small>
+                    💡 Bank format detected: Debit = money out (expenses),
+                    Credit = money in (income)
+                  </small>
                 </div>
               </>
             ) : columnMapping.isBasilCSV ? (
               <>
                 <div className="mapping-row">
                   <label className="mapping-label">Amount Column *</label>
-                  <select 
+                  <select
                     title="select amount column from csv"
                     className="form-select"
                     value={columnMapping.amountColumn}
-                    onChange={(e) => setColumnMapping({...columnMapping, amountColumn: e.target.value})}
+                    onChange={(e) =>
+                      setColumnMapping({
+                        ...columnMapping,
+                        amountColumn: e.target.value,
+                      })
+                    }
                   >
                     <option value="">Select amount column...</option>
-                    {Object.keys(csvData[0]).map(col => (
-                      <option key={col} value={col}>{col}</option>
+                    {Object.keys(csvData[0]).map((col) => (
+                      <option key={col} value={col}>
+                        {col}
+                      </option>
                     ))}
                   </select>
                 </div>
-                
+
                 <div className="mapping-note">
-                  <small>🌿 Basil CSV detected: Your exported data with Type and Category columns</small>
+                  <small>
+                    🌿 Basil CSV detected: Your exported data with Type and
+                    Category columns
+                  </small>
                 </div>
               </>
             ) : (
               <div className="mapping-row">
                 <label className="mapping-label">Amount Column *</label>
-                <select 
+                <select
                   title="select amount column from csv"
                   className="form-select"
                   value={columnMapping.amountColumn}
-                  onChange={(e) => setColumnMapping({...columnMapping, amountColumn: e.target.value})}
+                  onChange={(e) =>
+                    setColumnMapping({
+                      ...columnMapping,
+                      amountColumn: e.target.value,
+                    })
+                  }
                 >
                   <option value="">Select amount column...</option>
-                  {Object.keys(csvData[0]).map(col => (
-                    <option key={col} value={col}>{col}</option>
+                  {Object.keys(csvData[0]).map((col) => (
+                    <option key={col} value={col}>
+                      {col}
+                    </option>
                   ))}
                 </select>
               </div>
             )}
-            
+
             <div className="mapping-row">
-              <label className="mapping-label">Category Column (Optional)</label>
-              <select 
+              <label className="mapping-label">
+                Category Column (Optional)
+              </label>
+              <select
                 title="select category column from csv"
                 className="form-select"
-                value={columnMapping.categoryColumn || ''}
-                onChange={(e) => setColumnMapping({...columnMapping, categoryColumn: e.target.value || undefined})}
+                value={columnMapping.categoryColumn || ""}
+                onChange={(e) =>
+                  setColumnMapping({
+                    ...columnMapping,
+                    categoryColumn: e.target.value || undefined,
+                  })
+                }
               >
                 <option value="">No category column</option>
-                {Object.keys(csvData[0]).map(col => (
-                  <option key={col} value={col}>{col}</option>
+                {Object.keys(csvData[0]).map((col) => (
+                  <option key={col} value={col}>
+                    {col}
+                  </option>
                 ))}
               </select>
             </div>
@@ -455,19 +581,28 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
             {(columnMapping.isBasilCSV || columnMapping.typeColumn) && (
               <div className="mapping-row">
                 <label className="mapping-label">Type Column (Optional)</label>
-                <select 
+                <select
                   title="select type column from csv"
                   className="form-select"
-                  value={columnMapping.typeColumn || ''}
-                  onChange={(e) => setColumnMapping({...columnMapping, typeColumn: e.target.value || undefined})}
+                  value={columnMapping.typeColumn || ""}
+                  onChange={(e) =>
+                    setColumnMapping({
+                      ...columnMapping,
+                      typeColumn: e.target.value || undefined,
+                    })
+                  }
                 >
                   <option value="">No type column</option>
-                  {Object.keys(csvData[0]).map(col => (
-                    <option key={col} value={col}>{col}</option>
+                  {Object.keys(csvData[0]).map((col) => (
+                    <option key={col} value={col}>
+                      {col}
+                    </option>
                   ))}
                 </select>
                 {columnMapping.isBasilCSV && (
-                  <small className="mapping-hint">Maps to Income/Expense from your Basil export</small>
+                  <small className="mapping-hint">
+                    Maps to Income/Expense from your Basil export
+                  </small>
                 )}
               </div>
             )}
@@ -475,23 +610,34 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
             {/* Created At column for Basil CSV */}
             {columnMapping.isBasilCSV && (
               <div className="mapping-row">
-                <label className="mapping-label">Created At Column (Optional)</label>
-                <select 
+                <label className="mapping-label">
+                  Created At Column (Optional)
+                </label>
+                <select
                   title="select created at column from csv"
                   className="form-select"
-                  value={columnMapping.createdAtColumn || ''}
-                  onChange={(e) => setColumnMapping({...columnMapping, createdAtColumn: e.target.value || undefined})}
+                  value={columnMapping.createdAtColumn || ""}
+                  onChange={(e) =>
+                    setColumnMapping({
+                      ...columnMapping,
+                      createdAtColumn: e.target.value || undefined,
+                    })
+                  }
                 >
                   <option value="">No created at column</option>
-                  {Object.keys(csvData[0]).map(col => (
-                    <option key={col} value={col}>{col}</option>
+                  {Object.keys(csvData[0]).map((col) => (
+                    <option key={col} value={col}>
+                      {col}
+                    </option>
                   ))}
                 </select>
-                <small className="mapping-hint">Preserves original transaction creation timestamps</small>
+                <small className="mapping-hint">
+                  Preserves original transaction creation timestamps
+                </small>
               </div>
             )}
           </div>
-          
+
           <div className="preview-section">
             <h4>Preview (first 3 rows):</h4>
             <div className="preview-table">
@@ -515,21 +661,44 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                 <tbody>
                   {csvData.slice(0, 3).map((row, index) => (
                     <tr key={index}>
-                      <td>{columnMapping.dateColumn ? String(row[columnMapping.dateColumn]) : '—'}</td>
-                      <td>{columnMapping.descriptionColumn ? String(row[columnMapping.descriptionColumn]) : '—'}</td>
-                      {columnMapping.debitColumn || columnMapping.creditColumn ? (
+                      <td>
+                        {columnMapping.dateColumn
+                          ? String(row[columnMapping.dateColumn])
+                          : "—"}
+                      </td>
+                      <td>
+                        {columnMapping.descriptionColumn
+                          ? String(row[columnMapping.descriptionColumn])
+                          : "—"}
+                      </td>
+                      {columnMapping.debitColumn ||
+                      columnMapping.creditColumn ? (
                         <>
-                          <td>{columnMapping.debitColumn ? String(row[columnMapping.debitColumn] || '') : '—'}</td>
-                          <td>{columnMapping.creditColumn ? String(row[columnMapping.creditColumn] || '') : '—'}</td>
+                          <td>
+                            {columnMapping.debitColumn
+                              ? String(row[columnMapping.debitColumn] || "")
+                              : "—"}
+                          </td>
+                          <td>
+                            {columnMapping.creditColumn
+                              ? String(row[columnMapping.creditColumn] || "")
+                              : "—"}
+                          </td>
                         </>
                       ) : (
-                        <td>{columnMapping.amountColumn ? String(row[columnMapping.amountColumn]) : '—'}</td>
+                        <td>
+                          {columnMapping.amountColumn
+                            ? String(row[columnMapping.amountColumn])
+                            : "—"}
+                        </td>
                       )}
                       {columnMapping.categoryColumn && (
-                        <td>{String(row[columnMapping.categoryColumn] || '—')}</td>
+                        <td>
+                          {String(row[columnMapping.categoryColumn] || "—")}
+                        </td>
                       )}
                       {columnMapping.typeColumn && (
-                        <td>{String(row[columnMapping.typeColumn] || '—')}</td>
+                        <td>{String(row[columnMapping.typeColumn] || "—")}</td>
                       )}
                     </tr>
                   ))}
@@ -540,61 +709,67 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
         </>
       )}
     </div>
-  )
+  );
 
   const renderDuplicatesStep = () => {
-    const duplicates = parsedTransactions.filter(t => t.isDuplicate)
-    
+    const duplicates = parsedTransactions.filter((t) => t.isDuplicate);
+
     if (duplicates.length === 0) {
       return (
         <div className="import-step">
           <div className="step-header">
             <CheckCircle size={32} className="step-icon success" />
             <h3>No Duplicates Found</h3>
-            <p>All {parsedTransactions.length} transactions appear to be unique</p>
+            <p>
+              All {parsedTransactions.length} transactions appear to be unique
+            </p>
           </div>
-          
+
           <div className="no-duplicates-message">
             <p>✅ Ready to proceed with categorization</p>
           </div>
         </div>
-      )
+      );
     }
-    
+
     return (
       <div className="import-step">
         <div className="step-header">
           <AlertCircle size={32} className="step-icon warning" />
           <h3>Potential Duplicates Found</h3>
-          <p>We found {duplicates.length} transactions that might already exist</p>
+          <p>
+            We found {duplicates.length} transactions that might already exist
+          </p>
         </div>
-        
+
         <div className="duplicates-list">
           <div className="duplicates-header">
             <label className="checkbox-label">
               <input
                 type="checkbox"
-                checked={duplicates.every(d => selectedTransactions.has(d.id))}
+                checked={duplicates.every((d) =>
+                  selectedTransactions.has(d.id),
+                )}
                 onChange={(e) => {
                   if (e.target.checked) {
-                    setSelectedTransactions(prev => {
-                      const newSet = new Set(prev)
-                      duplicates.forEach(d => newSet.add(d.id))
-                      return newSet
-                    })
+                    setSelectedTransactions((prev) => {
+                      const newSet = new Set(prev);
+                      duplicates.forEach((d) => newSet.add(d.id));
+                      return newSet;
+                    });
                   } else {
-                    setSelectedTransactions(prev => {
-                      const newSet = new Set(prev)
-                      duplicates.forEach(d => newSet.delete(d.id))
-                      return newSet
-                    })
+                    setSelectedTransactions((prev) => {
+                      const newSet = new Set(prev);
+                      duplicates.forEach((d) => newSet.delete(d.id));
+                      return newSet;
+                    });
                   }
                 }}
               />
               <span>Import duplicates anyway</span>
             </label>
           </div>
-          
+
           {duplicates.map((transaction) => (
             <div key={transaction.id} className="duplicate-item">
               <label className="checkbox-label">
@@ -602,21 +777,25 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                   type="checkbox"
                   checked={selectedTransactions.has(transaction.id)}
                   onChange={(e) => {
-                    setSelectedTransactions(prev => {
-                      const newSet = new Set(prev)
+                    setSelectedTransactions((prev) => {
+                      const newSet = new Set(prev);
                       if (e.target.checked) {
-                        newSet.add(transaction.id)
+                        newSet.add(transaction.id);
                       } else {
-                        newSet.delete(transaction.id)
+                        newSet.delete(transaction.id);
                       }
-                      return newSet
-                    })
+                      return newSet;
+                    });
                   }}
                 />
                 <div className="transaction-info">
                   <div className="transaction-main-info">
-                    <span className="description">{transaction.description}</span>
-                    <span className="amount">${transaction.amount.toFixed(2)}</span>
+                    <span className="description">
+                      {transaction.description}
+                    </span>
+                    <span className="amount">
+                      ${transaction.amount.toFixed(2)}
+                    </span>
                     <span className="date">{transaction.date}</span>
                   </div>
                   <div className="duplicate-reason">
@@ -629,73 +808,97 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
           ))}
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   const renderBulkEditStep = () => (
     <div className="import-step">
       <div className="step-header">
         <Edit3 size={32} className="step-icon" />
         <h3>Bulk Edit Transactions</h3>
-        <p>Group similar transactions and assign categories in bulk. Duplicate transactions are unchecked by default.</p>
+        <p>
+          Group similar transactions and assign categories in bulk. Duplicate
+          transactions are unchecked by default.
+        </p>
       </div>
-      
+
       <div className="bulk-edit-content">
         {transactionGroups.length > 0 && (
           <>
             <div className="groups-summary">
-              <p>Found {transactionGroups.length} groups of similar transactions</p>
+              <p>
+                Found {transactionGroups.length} groups of similar transactions
+              </p>
             </div>
-            
+
             {transactionGroups.map((group, groupIndex) => (
-              <div key={groupIndex} className={`transaction-group ${group.includeInImport === false ? 'excluded' : ''}`}>
+              <div
+                key={groupIndex}
+                className={`transaction-group ${group.includeInImport === false ? "excluded" : ""}`}
+              >
                 <div className="group-header">
                   <div className="group-info">
                     <label className="checkbox-label">
                       <input
                         type="checkbox"
                         checked={group.includeInImport !== false}
-                        onChange={(e) => updateTransactionGroup(groupIndex, { includeInImport: e.target.checked })}
+                        onChange={(e) =>
+                          updateTransactionGroup(groupIndex, {
+                            includeInImport: e.target.checked,
+                          })
+                        }
                       />
                       <div className="group-title-section">
                         <h4>{group.description}</h4>
-                        <span className="group-count">{group.transactions.length} transactions</span>
+                        <span className="group-count">
+                          {group.transactions.length} transactions
+                        </span>
                       </div>
                     </label>
                   </div>
-                  
+
                   {group.includeInImport !== false && (
                     <div className="group-controls">
                       <select
                         className="form-select"
-                        value={group.suggestedType || 'expense'}
-                        onChange={(e) => updateTransactionGroup(groupIndex, { 
-                          type: e.target.value as 'income' | 'expense' 
-                        })}
+                        value={group.suggestedType || "expense"}
+                        onChange={(e) =>
+                          updateTransactionGroup(groupIndex, {
+                            type: e.target.value as "income" | "expense",
+                          })
+                        }
                         aria-label="Transaction type"
                       >
                         <option value="expense">Expense</option>
                         <option value="income">Income</option>
                       </select>
-                      
+
                       {!showNewCategoryInputs.get(groupIndex) ? (
                         <select
                           className="form-select"
-                          value={group.suggestedCategory || ''}
+                          value={group.suggestedCategory || ""}
                           onChange={(e) => {
-                            if (e.target.value === 'ADD_NEW') {
-                              toggleNewCategoryInput(groupIndex, true)
+                            if (e.target.value === "ADD_NEW") {
+                              toggleNewCategoryInput(groupIndex, true);
                             } else {
-                              updateTransactionGroup(groupIndex, { category: e.target.value })
+                              updateTransactionGroup(groupIndex, {
+                                category: e.target.value,
+                              });
                             }
                           }}
                           aria-label="Category"
                         >
                           <option value="">Select category...</option>
                           {availableCategories
-                            .filter(cat => !group.suggestedType || cat.type === group.suggestedType)
-                            .map(cat => (
-                              <option key={cat.id} value={cat.name}>{cat.name}</option>
+                            .filter(
+                              (cat) =>
+                                !group.suggestedType ||
+                                cat.type === group.suggestedType,
+                            )
+                            .map((cat) => (
+                              <option key={cat.id} value={cat.name}>
+                                {cat.name}
+                              </option>
                             ))}
                           <option value="ADD_NEW">+ Add New Category</option>
                         </select>
@@ -704,15 +907,20 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                           <input
                             type="text"
                             className="form-input new-category-input"
-                            value={newCategoryNames.get(groupIndex) || ''}
-                            onChange={(e) => updateNewCategoryName(groupIndex, e.target.value)}
+                            value={newCategoryNames.get(groupIndex) || ""}
+                            onChange={(e) =>
+                              updateNewCategoryName(groupIndex, e.target.value)
+                            }
                             placeholder="Enter new category name"
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault()
-                                handleAddNewCategory(groupIndex, group.suggestedType || 'expense')
-                              } else if (e.key === 'Escape') {
-                                toggleNewCategoryInput(groupIndex, false)
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleAddNewCategory(
+                                  groupIndex,
+                                  group.suggestedType || "expense",
+                                );
+                              } else if (e.key === "Escape") {
+                                toggleNewCategoryInput(groupIndex, false);
                               }
                             }}
                             autoFocus
@@ -720,7 +928,12 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                           <button
                             type="button"
                             className="btn btn-primary btn-sm"
-                            onClick={() => handleAddNewCategory(groupIndex, group.suggestedType || 'expense')}
+                            onClick={() =>
+                              handleAddNewCategory(
+                                groupIndex,
+                                group.suggestedType || "expense",
+                              )
+                            }
                             disabled={!newCategoryNames.get(groupIndex)?.trim()}
                           >
                             <PlusCircle size={14} />
@@ -729,7 +942,9 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                           <button
                             type="button"
                             className="btn btn-secondary btn-sm"
-                            onClick={() => toggleNewCategoryInput(groupIndex, false)}
+                            onClick={() =>
+                              toggleNewCategoryInput(groupIndex, false)
+                            }
                             aria-label="Cancel add new category"
                           >
                             <X size={14} />
@@ -739,12 +954,16 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="group-transactions">
                   {group.transactions.slice(0, 3).map((transaction) => (
                     <div key={transaction.id} className="group-transaction">
-                      <span className="description">{transaction.description}</span>
-                      <span className="amount">${transaction.amount.toFixed(2)}</span>
+                      <span className="description">
+                        {transaction.description}
+                      </span>
+                      <span className="amount">
+                        ${transaction.amount.toFixed(2)}
+                      </span>
                       <span className="date">{transaction.date}</span>
                       {transaction.isDuplicate && (
                         <span className="duplicate-badge">Duplicate</span>
@@ -761,15 +980,18 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
             ))}
           </>
         )}
-        
+
         {ungroupedTransactions.length > 0 && (
           <>
             <div className="groups-summary">
               <p>Individual transactions ({ungroupedTransactions.length})</p>
             </div>
-            
+
             {ungroupedTransactions.map((transaction) => (
-              <div key={transaction.id} className={`transaction-group individual-transaction ${selectedTransactions.has(transaction.id) ? '' : 'excluded'}`}>
+              <div
+                key={transaction.id}
+                className={`transaction-group individual-transaction ${selectedTransactions.has(transaction.id) ? "" : "excluded"}`}
+              >
                 <div className="group-header">
                   <div className="group-info">
                     <label className="checkbox-label">
@@ -777,83 +999,109 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                         type="checkbox"
                         checked={selectedTransactions.has(transaction.id)}
                         onChange={(e) => {
-                          const newSelected = new Set(selectedTransactions)
+                          const newSelected = new Set(selectedTransactions);
                           if (e.target.checked) {
-                            newSelected.add(transaction.id)
+                            newSelected.add(transaction.id);
                           } else {
-                            newSelected.delete(transaction.id)
+                            newSelected.delete(transaction.id);
                           }
-                          setSelectedTransactions(newSelected)
+                          setSelectedTransactions(newSelected);
                         }}
                       />
                       <div className="group-title-section">
                         <h4>{transaction.description}</h4>
-                        <span className="group-count">${transaction.amount.toFixed(2)} on {transaction.date}</span>
+                        <span className="group-count">
+                          ${transaction.amount.toFixed(2)} on {transaction.date}
+                        </span>
                         {transaction.isDuplicate && (
                           <span className="duplicate-badge">Duplicate</span>
                         )}
                       </div>
                     </label>
                   </div>
-                  
+
                   {selectedTransactions.has(transaction.id) && (
                     <div className="group-controls">
-                    <select
-                      className="form-select"
-                      value={transaction.type || 'expense'}
-                      onChange={(e) => updateUngroupedTransaction(transaction.id, { 
-                        type: e.target.value as 'income' | 'expense' 
-                      })}
-                      aria-label="Transaction type"
-                    >
-                      <option value="expense">Expense</option>
-                      <option value="income">Income</option>
-                    </select>
-                    
-                    <select
-                      className="form-select"
-                      value={transaction.category || ''}
-                      onChange={(e) => updateUngroupedTransaction(transaction.id, { category: e.target.value })}
-                      aria-label="Category"
-                    >
-                      <option value="">Select category...</option>
-                      {availableCategories
-                        .filter(cat => !transaction.type || cat.type === transaction.type)
-                        .map(cat => (
-                          <option key={cat.id} value={cat.name}>{cat.name}</option>
-                        ))}
-                    </select>
-                  </div>
+                      <select
+                        className="form-select"
+                        value={transaction.type || "expense"}
+                        onChange={(e) =>
+                          updateUngroupedTransaction(transaction.id, {
+                            type: e.target.value as "income" | "expense",
+                          })
+                        }
+                        aria-label="Transaction type"
+                      >
+                        <option value="expense">Expense</option>
+                        <option value="income">Income</option>
+                      </select>
+
+                      <select
+                        className="form-select"
+                        value={transaction.category || ""}
+                        onChange={(e) =>
+                          updateUngroupedTransaction(transaction.id, {
+                            category: e.target.value,
+                          })
+                        }
+                        aria-label="Category"
+                      >
+                        <option value="">Select category...</option>
+                        {availableCategories
+                          .filter(
+                            (cat) =>
+                              !transaction.type ||
+                              cat.type === transaction.type,
+                          )
+                          .map((cat) => (
+                            <option key={cat.id} value={cat.name}>
+                              {cat.name}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
                   )}
                 </div>
               </div>
             ))}
           </>
         )}
-        
-        {transactionGroups.length === 0 && ungroupedTransactions.length === 0 && (
-          <div className="no-groups">
-            <p>No transactions to categorize.</p>
-          </div>
-        )}
+
+        {transactionGroups.length === 0 &&
+          ungroupedTransactions.length === 0 && (
+            <div className="no-groups">
+              <p>No transactions to categorize.</p>
+            </div>
+          )}
       </div>
     </div>
-  )
+  );
 
   const renderConfirmStep = () => {
     // Calculate accurate totals based on included groups and selections
     const includedGroupTransactions = transactionGroups
-      .filter(group => group.includeInImport !== false)
-      .flatMap(group => group.transactions)
-    
+      .filter((group) => group.includeInImport !== false)
+      .flatMap((group) => group.transactions);
+
     // Only include selected individual transactions
-    const selectedUngroupedTransactions = ungroupedTransactions.filter(t => selectedTransactions.has(t.id))
-    
-    const totalDuplicates = parsedTransactions.filter(t => t.isDuplicate).length
-    
-    const totalToImport = [...includedGroupTransactions, ...selectedUngroupedTransactions].length
-    const includedGroups = transactionGroups.filter(group => group.includeInImport !== false).length
-    const excludedGroups = transactionGroups.filter(group => group.includeInImport === false).length
+    const selectedUngroupedTransactions = ungroupedTransactions.filter((t) =>
+      selectedTransactions.has(t.id),
+    );
+
+    const totalDuplicates = parsedTransactions.filter(
+      (t) => t.isDuplicate,
+    ).length;
+
+    const totalToImport = [
+      ...includedGroupTransactions,
+      ...selectedUngroupedTransactions,
+    ].length;
+    const includedGroups = transactionGroups.filter(
+      (group) => group.includeInImport !== false,
+    ).length;
+    const excludedGroups = transactionGroups.filter(
+      (group) => group.includeInImport === false,
+    ).length;
 
     return (
       <div className="import-step">
@@ -862,7 +1110,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
           <h3>Ready to Import</h3>
           <p>Review your import settings before finalizing</p>
         </div>
-        
+
         <div className="import-summary">
           <div className="summary-item">
             <strong>Total Transactions:</strong> {totalToImport}
@@ -876,11 +1124,15 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
             <strong>Groups to Import:</strong> {includedGroups}
           </div>
           <div className="summary-item">
-            <strong>Individual Transactions:</strong> {selectedUngroupedTransactions.length}
+            <strong>Individual Transactions:</strong>{" "}
+            {selectedUngroupedTransactions.length}
           </div>
-          {ungroupedTransactions.length > selectedUngroupedTransactions.length && (
+          {ungroupedTransactions.length >
+            selectedUngroupedTransactions.length && (
             <div className="summary-item">
-              <strong>Individual Transactions Excluded:</strong> {ungroupedTransactions.length - selectedUngroupedTransactions.length}
+              <strong>Individual Transactions Excluded:</strong>{" "}
+              {ungroupedTransactions.length -
+                selectedUngroupedTransactions.length}
             </div>
           )}
           {excludedGroups > 0 && (
@@ -890,8 +1142,8 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
           )}
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   const renderCompleteStep = () => (
     <div className="import-step">
@@ -900,7 +1152,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
         <h3>Import Complete!</h3>
         <p>Your transactions have been successfully imported</p>
       </div>
-      
+
       <div className="success-actions">
         <button className="btn btn-primary" onClick={onComplete}>
           <Check size={16} />
@@ -908,71 +1160,84 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
         </button>
       </div>
     </div>
-  )
+  );
 
   const renderStepContent = () => {
     switch (currentStep) {
-      case 'upload': return renderUploadStep()
-      case 'mapping': return renderMappingStep()
-      case 'duplicates': return renderDuplicatesStep()
-      case 'bulk-edit': return renderBulkEditStep()
-      case 'confirm': return renderConfirmStep()
-      case 'complete': return renderCompleteStep()
-      default: return renderUploadStep()
+      case "upload":
+        return renderUploadStep();
+      case "mapping":
+        return renderMappingStep();
+      case "duplicates":
+        return renderDuplicatesStep();
+      case "bulk-edit":
+        return renderBulkEditStep();
+      case "confirm":
+        return renderConfirmStep();
+      case "complete":
+        return renderCompleteStep();
+      default:
+        return renderUploadStep();
     }
-  }
+  };
 
   const canGoNext = () => {
     switch (currentStep) {
-      case 'mapping': {
-        const hasAmountData = columnMapping.amountColumn || (columnMapping.debitColumn && columnMapping.creditColumn)
-        return columnMapping.dateColumn && columnMapping.descriptionColumn && hasAmountData
+      case "mapping": {
+        const hasAmountData =
+          columnMapping.amountColumn ||
+          (columnMapping.debitColumn && columnMapping.creditColumn);
+        return (
+          columnMapping.dateColumn &&
+          columnMapping.descriptionColumn &&
+          hasAmountData
+        );
       }
-      case 'duplicates':
-      case 'bulk-edit':
-      case 'confirm':
-        return true
+      case "duplicates":
+      case "bulk-edit":
+      case "confirm":
+        return true;
       default:
-        return false
+        return false;
     }
-  }
+  };
 
   const handleNext = () => {
     switch (currentStep) {
-      case 'mapping':
-        handleMappingConfirm()
-        break
-      case 'duplicates':
-        handleDuplicateReview()
-        break
-      case 'bulk-edit':
-        setCurrentStep('confirm')
-        break
-      case 'confirm':
-        handleFinalImport()
-        break
+      case "mapping":
+        handleMappingConfirm();
+        break;
+      case "duplicates":
+        handleDuplicateReview();
+        break;
+      case "bulk-edit":
+        setCurrentStep("confirm");
+        break;
+      case "confirm":
+        handleFinalImport();
+        break;
     }
-  }
+  };
 
   const handleBack = () => {
     switch (currentStep) {
-      case 'mapping':
-        setCurrentStep('upload')
-        break
-      case 'duplicates':
-        setCurrentStep('mapping')
-        break
-      case 'bulk-edit': {
+      case "mapping":
+        setCurrentStep("upload");
+        break;
+      case "duplicates":
+        setCurrentStep("mapping");
+        break;
+      case "bulk-edit": {
         // Go back to duplicates if there were any, otherwise mapping
-        const hasDuplicates = parsedTransactions.some(t => t.isDuplicate)
-        setCurrentStep(hasDuplicates ? 'duplicates' : 'mapping')
-        break
+        const hasDuplicates = parsedTransactions.some((t) => t.isDuplicate);
+        setCurrentStep(hasDuplicates ? "duplicates" : "mapping");
+        break;
       }
-      case 'confirm':
-        setCurrentStep('bulk-edit')
-        break
+      case "confirm":
+        setCurrentStep("bulk-edit");
+        break;
     }
-  }
+  };
 
   return (
     <div className="import-wizard">
@@ -983,42 +1248,48 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
           Cancel
         </button>
       </div>
-      
+
       <div className="wizard-progress">
-        <div className={`step ${['upload', 'mapping', 'duplicates', 'bulk-edit', 'confirm'].includes(currentStep) ? 'active' : ''}`}>
+        <div
+          className={`step ${["upload", "mapping", "duplicates", "bulk-edit", "confirm"].includes(currentStep) ? "active" : ""}`}
+        >
           1. Upload
         </div>
-        <div className={`step ${['mapping', 'duplicates', 'bulk-edit', 'confirm'].includes(currentStep) ? 'active' : ''}`}>
+        <div
+          className={`step ${["mapping", "duplicates", "bulk-edit", "confirm"].includes(currentStep) ? "active" : ""}`}
+        >
           2. Map
         </div>
-        <div className={`step ${['duplicates', 'bulk-edit', 'confirm'].includes(currentStep) ? 'active' : ''}`}>
+        <div
+          className={`step ${["duplicates", "bulk-edit", "confirm"].includes(currentStep) ? "active" : ""}`}
+        >
           3. Review
         </div>
-        <div className={`step ${['bulk-edit', 'confirm'].includes(currentStep) ? 'active' : ''}`}>
+        <div
+          className={`step ${["bulk-edit", "confirm"].includes(currentStep) ? "active" : ""}`}
+        >
           4. Edit
         </div>
-        <div className={`step ${currentStep === 'confirm' ? 'active' : ''}`}>
+        <div className={`step ${currentStep === "confirm" ? "active" : ""}`}>
           5. Import
         </div>
       </div>
-      
-      <div className="wizard-content">
-        {renderStepContent()}
-      </div>
-      
-      {currentStep !== 'upload' && currentStep !== 'complete' && (
+
+      <div className="wizard-content">{renderStepContent()}</div>
+
+      {currentStep !== "upload" && currentStep !== "complete" && (
         <div className="wizard-actions">
-          <button 
-            className="btn btn-secondary" 
+          <button
+            className="btn btn-secondary"
             onClick={handleBack}
             disabled={isProcessing}
           >
             <ArrowLeft size={16} />
             Back
           </button>
-          
-          <button 
-            className="btn btn-primary" 
+
+          <button
+            className="btn btn-primary"
             onClick={handleNext}
             disabled={!canGoNext() || isProcessing}
           >
@@ -1027,7 +1298,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                 <div className="spinner" />
                 Processing...
               </>
-            ) : currentStep === 'confirm' ? (
+            ) : currentStep === "confirm" ? (
               <>
                 <Download size={16} />
                 Import Transactions
@@ -1042,7 +1313,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default ImportWizard
+export default ImportWizard;
