@@ -13,6 +13,7 @@ function TransactionHistory() {
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedType, setSelectedType] = useState<'all' | 'income' | 'expense'>('all')
   const [selectedMonth, setSelectedMonth] = useState('')
+  const [selectedYear, setSelectedYear] = useState('')
   const [sortBy, setSortBy] = useState<'date' | 'amount'>('date')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   
@@ -51,10 +52,35 @@ function TransactionHistory() {
     return months
   }, [])
 
+  // Generate available years from transaction data
+  const getAvailableYears = useCallback(() => {
+    const years = new Set<number>()
+    
+    transactions.forEach(transaction => {
+      const transactionDate = parseLocalDate(transaction.date)
+      years.add(transactionDate.getFullYear())
+    })
+    
+    return Array.from(years)
+      .sort((a, b) => b - a) // Sort descending (newest first)
+      .map(year => ({
+        value: year.toString(),
+        label: year.toString()
+      }))
+  }, [transactions])
+
   const loadTransactionData = useCallback(() => {
     const data = loadTransactions()
     setTransactions(data)
   }, [])
+
+  const clearAllFilters = () => {
+    setSearchTerm('')
+    setSelectedCategory('')
+    setSelectedType('all')
+    setSelectedMonth('')
+    setSelectedYear('')
+  }
 
   const filterAndSortTransactions = useCallback(() => {
     let filtered = [...transactions]
@@ -93,6 +119,14 @@ function TransactionHistory() {
       })
     }
 
+    // Filter by year
+    if (selectedYear) {
+      filtered = filtered.filter(t => {
+        const transactionDate = parseLocalDate(t.date)
+        return transactionDate.getFullYear() === parseInt(selectedYear)
+      })
+    }
+
     // Sort
     filtered.sort((a, b) => {
       let comparison = 0
@@ -107,7 +141,7 @@ function TransactionHistory() {
     })
 
     setFilteredTransactions(filtered)
-  }, [transactions, searchTerm, selectedCategory, selectedType, selectedMonth, sortBy, sortOrder])
+  }, [transactions, searchTerm, selectedCategory, selectedType, selectedMonth, selectedYear, sortBy, sortOrder])
 
   useEffect(() => {
     loadTransactionData()
@@ -426,13 +460,36 @@ function TransactionHistory() {
             <select
               className="form-select"
               value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
+              onChange={(e) => {
+                setSelectedMonth(e.target.value)
+                if (e.target.value) setSelectedYear('') // Clear year when month is selected
+              }}
               aria-label="Filter by month"
             >
               <option value="">All Months</option>
               {getLastTwelveMonths().map((month) => (
                 <option key={month.value} value={month.value}>
                   {month.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Year Filter */}
+          <div className="filter-group">
+            <select
+              className="form-select"
+              value={selectedYear}
+              onChange={(e) => {
+                setSelectedYear(e.target.value)
+                if (e.target.value) setSelectedMonth('') // Clear month when year is selected
+              }}
+              aria-label="Filter by year"
+            >
+              <option value="">All Years</option>
+              {getAvailableYears().map((year) => (
+                <option key={year.value} value={year.value}>
+                  {year.label}
                 </option>
               ))}
             </select>
@@ -456,6 +513,19 @@ function TransactionHistory() {
               <option value="amount-asc">Lowest Amount</option>
             </select>
           </div>
+
+          {/* Clear Filters */}
+          {(searchTerm || selectedCategory || selectedType !== 'all' || selectedMonth || selectedYear) && (
+            <div className="filter-group">
+              <button
+                className="btn btn-secondary"
+                onClick={clearAllFilters}
+                aria-label="Clear all filters"
+              >
+                Clear Filters
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Summary and Bulk Edit Toggle */}
@@ -470,7 +540,7 @@ function TransactionHistory() {
                 <span className="summary-label">Expenses:</span>
                 <span className="summary-value">{formatCurrency(totalExpenses)}</span>
               </div>
-              <div className="summary-item balance">
+              <div className={`summary-item balance ${totalIncome - totalExpenses >= 0 ? 'positive' : 'negative'}`}>
                 <span className="summary-label">Net:</span>
                 <span className="summary-value">{formatCurrency(totalIncome - totalExpenses)}</span>
               </div>

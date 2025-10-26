@@ -1430,9 +1430,10 @@ legend.form-label {
 
 .filters-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: minmax(200px, 2fr) minmax(150px, 1.5fr) minmax(100px, 0.8fr) minmax(130px, 1.2fr) minmax(80px, 0.8fr) auto;
   gap: 1rem;
   margin-bottom: 1rem;
+  align-items: end;
 }
 
 .filter-group {
@@ -1458,8 +1459,11 @@ legend.form-label {
 .filter-summary {
   display: flex;
   justify-content: space-between;
-  padding: 1rem 0;
-  border-top: 1px solid #e5e7eb;
+  gap: 1rem;
+  padding: 1.25rem 1rem;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-light);
+  border-radius: 12px;
   margin-top: 1rem;
 }
 
@@ -1467,28 +1471,39 @@ legend.form-label {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .summary-item .summary-label {
-  font-size: 0.875rem;
-  color: #666;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .summary-item .summary-value {
-  font-weight: 600;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
 }
 
 .summary-item.income .summary-value {
   color: #10b981;
 }
 
-.summary-item.expense .summary-value {
+.summary-item.expenses .summary-value {
   color: #ef4444;
 }
 
-.summary-item.balance .summary-value {
+.summary-item.balance.positive .summary-value {
   color: #10b981;
+}
+
+.summary-item.balance.negative .summary-value {
+  color: #ef4444;
 }
 
 .transactions-list {
@@ -1683,7 +1698,7 @@ legend.form-label {
   }
   
   .filters-grid {
-    grid-template-columns: 2fr 1fr 1fr 1fr;
+    grid-template-columns: 2fr 1.5fr 0.8fr 1.2fr 0.8fr auto;
   }
   
   .analytics-header {
@@ -1733,10 +1748,41 @@ legend.form-label {
   .summary-amount {
     font-size: 1.5rem;
   }
+  
+  .filters-grid {
+    grid-template-columns: minmax(250px, 2.5fr) minmax(180px, 2fr) minmax(110px, 1fr) minmax(150px, 1.5fr) minmax(90px, 1fr) auto;
+  }
+}
+
+/* Medium screens - Two row layout for filters */
+@media (max-width: 1200px) and (min-width: 769px) {
+  .filters-grid {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 1rem 0.75rem;
+    grid-template-areas: 
+      "search category type"
+      "month year sort";
+  }
+  
+  .filters-grid .filter-group:nth-child(1) { grid-area: search; }
+  .filters-grid .filter-group:nth-child(2) { grid-area: category; }
+  .filters-grid .filter-group:nth-child(3) { grid-area: type; }
+  .filters-grid .filter-group:nth-child(4) { grid-area: month; }
+  .filters-grid .filter-group:nth-child(5) { grid-area: year; }
+  .filters-grid .filter-group:nth-child(6) { grid-area: sort; }
+  
+  /* Clear filters button positioning */
+  .filters-grid .filter-group:nth-child(7) { 
+    grid-column: 1 / -1;
+    justify-self: center;
+    margin-top: 0.5rem;
+  }
 }
 
 /* Tablet Layout */
-@media (max-width: 1024px) and (min-width: 769px) {
+@media (max-width: 1024px) and (min-width: 769px) {  
   .grid-4 {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1821,7 +1867,24 @@ legend.form-label {
   
   .filter-summary {
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .summary-item {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-light);
+    border-radius: 8px;
+  }
+  
+  .summary-item .summary-label {
+    font-size: 0.875rem;
+    text-transform: none;
+    letter-spacing: normal;
   }
   
   .quick-add-grid {
