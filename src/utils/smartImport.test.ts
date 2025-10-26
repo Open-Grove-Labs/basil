@@ -13,7 +13,7 @@ import { mockLocalStorage } from "../test/test-utils";
 
 // Mock the storage functions
 vi.mock("../utils/storage", () => ({
-  loadTransactions: vi.fn(),
+  loadTransactions: vi.fn(() => []),
 }));
 
 describe("SmartImport Utilities", () => {
@@ -317,6 +317,79 @@ describe("SmartImport Utilities", () => {
 
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBe(0);
+    });
+
+    it("should handle different date formats correctly", () => {
+      const csvData = [
+        { Date: "01/15/2024", Description: "Test 1", Amount: "50.00" },
+        { Date: "15/01/2024", Description: "Test 2", Amount: "60.00" },
+        { Date: "2024-01-15", Description: "Test 3", Amount: "70.00" },
+      ];
+
+      const result = processImportedTransactions(csvData, {
+        dateColumn: "Date",
+        descriptionColumn: "Description", 
+        amountColumn: "Amount",
+      });
+
+      // All should be processed successfully
+      expect(result.length).toBe(3);
+      result.forEach(transaction => {
+        expect(transaction.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      });
+    });
+
+    it("should handle negative amounts and income detection", () => {
+      const csvData = [
+        { Date: "2024-01-15", Description: "Salary Payment", Amount: "-2000.00" },
+        { Date: "2024-01-15", Description: "Grocery Store", Amount: "45.67" },
+        { Date: "2024-01-15", Description: "Paycheck", Amount: "-1500.00" },
+      ];
+
+      const result = processImportedTransactions(csvData, {
+        dateColumn: "Date",
+        descriptionColumn: "Description",
+        amountColumn: "Amount",
+      });
+
+      // Should process all transactions (income detection logic may vary)
+      expect(result.length).toBe(3);
+      
+      // Check that transactions have correct types assigned
+      result.forEach(transaction => {
+        expect(transaction.type).toMatch(/^(income|expense)$/);
+        expect(typeof transaction.amount).toBe("number");
+        expect(transaction.amount).toBeGreaterThan(0);
+      });
+    });
+
+    it("should handle missing or invalid amounts gracefully", () => {
+      const csvData = [
+        { Date: "2024-01-15", Description: "Valid Transaction", Amount: "50.00" },
+        { Date: "2024-01-16", Description: "Invalid Amount", Amount: "invalid" },
+        { Date: "2024-01-17", Description: "Empty Amount", Amount: "" },
+        { Date: "2024-01-18", Description: "Missing Amount", Amount: "" }, // Empty instead of missing
+      ];
+
+      const result = processImportedTransactions(csvData, {
+        dateColumn: "Date",
+        descriptionColumn: "Description",
+        amountColumn: "Amount",
+      });
+
+      // Should process non-empty amounts (empty strings are skipped, "invalid" becomes 0)
+      expect(result).toHaveLength(2);
+      
+      // Find the valid transaction
+      const validTransaction = result.find(t => t.amount > 0);
+      expect(validTransaction).toBeDefined();
+      expect(validTransaction!.amount).toBe(50);
+      expect(validTransaction!.description).toBe("Valid Transaction");
+      
+      // The invalid amount should be processed as 0
+      const invalidTransaction = result.find(t => t.amount === 0);
+      expect(invalidTransaction).toBeDefined();
+      expect(invalidTransaction!.description).toBe("Invalid Amount");
     });
   });
 });

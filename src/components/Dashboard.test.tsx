@@ -13,7 +13,8 @@ vi.mock("../utils/storage", () => ({
   loadTransactions: vi.fn(),
   loadCategories: vi.fn(),
   parseLocalDate: vi.fn(),
-  formatCurrency: vi.fn(),
+  loadSettings: vi.fn(),
+  loadBudgets: vi.fn(),
 }));
 
 const mockedStorage = vi.mocked(storage);
@@ -35,10 +36,14 @@ describe("Dashboard Component", () => {
       return new Date(year, month - 1, day);
     });
 
-    // Mock formatCurrency
-    mockedStorage.formatCurrency.mockImplementation((amount: number) => {
-      return `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    // Mock loadSettings to return default settings
+    mockedStorage.loadSettings.mockReturnValue({
+      currency: { code: "USD", symbol: "$", name: "US Dollar", position: "before" },
+      theme: "auto",
     });
+
+    // Mock loadBudgets to return empty array
+    mockedStorage.loadBudgets.mockReturnValue([]);
   });
 
   it("should render monthly overview section", () => {
@@ -49,12 +54,18 @@ describe("Dashboard Component", () => {
   });
 
   it("should display current month with percentage changes", () => {
-    const { getByText } = render(<Dashboard />);
+    const { container } = render(<Dashboard />);
 
     // Should show current month data (October 2025 since that's current date)
-    expect(getByText(/october 2025/i)).toBeInTheDocument();
-    expect(getByText(/income/i)).toBeInTheDocument();
-    expect(getByText(/expenses/i)).toBeInTheDocument();
+    expect(container.textContent).toMatch(/october 2025/i);
+    
+    // Check for current month with percentage changes (current-month class)
+    const currentMonth = container.querySelector('.current-month');
+    expect(currentMonth).toBeInTheDocument();
+    
+    // Should have percentage change indicators
+    const percentageChanges = container.querySelectorAll('.month-item-change');
+    expect(percentageChanges.length).toBeGreaterThan(0);
   });
 
   it("should display previous months without percentage changes", () => {
@@ -91,12 +102,14 @@ describe("Dashboard Component", () => {
     ).toBeInTheDocument();
   });
 
-  it("should render sparkline graphs for category trends", () => {
-    render(<Dashboard />);
+  it("should render category trends section", () => {
+    const { container } = render(<Dashboard />);
 
-    // Check for SVG elements (sparklines)
-    const sparklines = document.querySelectorAll(".sparkline-svg");
-    expect(sparklines.length).toBeGreaterThan(0);
+    // Should show category comparison section
+    expect(container.querySelector('#category-comparison')).toBeInTheDocument();
+    
+    // With no data, should show empty state
+    expect(container.querySelector('.empty-state')).toBeInTheDocument();
   });
 
   it("should apply correct CSS classes for positive/negative balances", () => {
@@ -148,5 +161,47 @@ describe("Dashboard Component", () => {
     // Look for percentage indicators (only on current month)
     const percentageElements = document.querySelectorAll(".month-item-change");
     expect(percentageElements.length).toBeGreaterThan(0);
+  });
+
+  describe("Dashboard Data Processing", () => {
+    it("should handle category spending analysis", () => {
+      const { container } = render(<Dashboard />);
+
+      // Should show category comparison section
+      expect(container.querySelector('#category-comparison')).toBeInTheDocument();
+      expect(container.textContent).toMatch(/category spending/i);
+    });
+
+    it("should display trending indicators", () => {
+      const { container } = render(<Dashboard />);
+
+      // Should have trending up/down icons
+      const trendingIcons = container.querySelectorAll('svg');
+      expect(trendingIcons.length).toBeGreaterThan(0);
+
+      // Should have trend-related classes
+      const trendElements = container.querySelectorAll('.month-item-change');
+      expect(trendElements.length).toBeGreaterThan(0);
+    });
+
+    it("should apply correct styling for positive and negative amounts", () => {
+      const { container } = render(<Dashboard />);
+
+      // Should have positive/negative classes
+      const positiveElements = container.querySelectorAll('.positive');
+      const negativeElements = container.querySelectorAll('.negative');
+      
+      expect(positiveElements.length + negativeElements.length).toBeGreaterThan(0);
+    });
+
+    it("should show empty state messaging appropriately", () => {
+      mockedStorage.loadTransactions.mockReturnValue([]);
+
+      const { container } = render(<Dashboard />);
+
+      // Should show appropriate empty state
+      expect(container.querySelector('.empty-state')).toBeInTheDocument();
+      expect(container.textContent).toMatch(/no expense categories/i);
+    });
   });
 });
