@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Target, TrendingDown, Calculator, Save, X, Plus } from 'lucide-react'
+import { Target, TrendingDown, Calculator, Save, X } from 'lucide-react'
 import { loadTransactions, loadCategories, loadSettings } from '../utils/storage'
 import { subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
 import { parseLocalDate } from '../utils/storage'
@@ -27,7 +27,7 @@ function Budget() {
   const [categories, setCategories] = useState<Category[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [currency] = useState<CurrencyConfig>(() => loadSettings().currency)
-  const [isEditing, setIsEditing] = useState(false)
+  const [editingCategories, setEditingCategories] = useState<Set<string>>(new Set())
   const [editingLimits, setEditingLimits] = useState<Record<string, string>>({})
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedTarget, setSelectedTarget] = useState<BudgetTarget>('stabilize')
@@ -186,38 +186,58 @@ function Budget() {
     setEditingLimits({})
   }
 
-  const startEditing = () => {
-    setIsEditing(true)
-    // Initialize editing limits with current values, but preserve any existing editing limits
-    // (e.g., from applied suggestions)
-    const limits = budgetItems.reduce((acc, item) => {
-      // Use existing editing limit if available, otherwise use current budget limit
-      acc[item.categoryId] = editingLimits[item.categoryId] || item.limit.toString()
-      return acc
-    }, {} as Record<string, string>)
-    setEditingLimits(limits)
+  const startEditingCategory = (categoryId: string) => {
+    setEditingCategories(prev => new Set([...prev, categoryId]))
+    
+    // Pre-populate editing limit with current value
+    const currentItem = budgetItems.find(item => item.categoryId === categoryId)
+    setEditingLimits(prev => ({
+      ...prev,
+      [categoryId]: currentItem ? currentItem.limit.toString() : ''
+    }))
   }
 
-  const saveChanges = () => {
-    const newBudgets: BudgetData[] = Object.entries(editingLimits).map(([categoryId, limitStr]) => ({
-      categoryId,
-      limit: parseFloat(limitStr) || 0
-    }))
-
-    setBudgetData(newBudgets)
-    localStorage.setItem('basil_budgets', JSON.stringify(newBudgets))
+  const saveCategoryEdit = (categoryId: string) => {
+    const newLimit = parseFloat(editingLimits[categoryId]) || 0
+    
+    // Update the budget data
+    const updatedBudgets = budgetData.filter(b => b.categoryId !== categoryId)
+    if (newLimit > 0) {
+      updatedBudgets.push({ categoryId, limit: newLimit })
+    }
+    
+    setBudgetData(updatedBudgets)
+    localStorage.setItem('basil_budgets', JSON.stringify(updatedBudgets))
     
     // Recalculate budget items with new limits
-    calculateBudgetItems(transactions, categories, newBudgets)
+    calculateBudgetItems(transactions, categories, updatedBudgets)
     
-    setIsEditing(false)
-    setEditingLimits({})
+    // Remove from editing state
+    setEditingCategories(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(categoryId)
+      return newSet
+    })
+    
+    setEditingLimits(prev => {
+      const newLimits = { ...prev }
+      delete newLimits[categoryId]
+      return newLimits
+    })
   }
 
-  const cancelEditing = () => {
-    setIsEditing(false)
-    setEditingLimits({})
-    setShowSuggestions(false)
+  const cancelCategoryEdit = (categoryId: string) => {
+    setEditingCategories(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(categoryId)
+      return newSet
+    })
+    
+    setEditingLimits(prev => {
+      const newLimits = { ...prev }
+      delete newLimits[categoryId]
+      return newLimits
+    })
   }
 
   const updateLimit = (categoryId: string, value: string) => {
@@ -262,45 +282,17 @@ function Budget() {
           </div>
         </div>
 
-        <div className="budget-actions">
-          {!isEditing ? (
-            <>
-              <button
-                className="btn btn-primary"
-                onClick={startEditing}
-              >
-                <Plus size={16} />
-                {budgetItems.some(item => item.limit > 0) ? 'Edit Budget' : 'Set Budget'}
-              </button>
-              {transactions.length > 0 && (
-                <button
-                  className="btn btn-secondary"
-                  onClick={openSuggestions}
-                >
-                  <Calculator size={16} />
-                  Auto-Suggest
-                </button>
-              )}
-            </>
-          ) : (
-            <>
-              <button
-                className="btn btn-primary"
-                onClick={saveChanges}
-              >
-                <Save size={16} />
-                Save Changes
-              </button>
-              <button
-                className="btn btn-secondary"
-                onClick={cancelEditing}
-              >
-                <X size={16} />
-                Cancel
-              </button>
-            </>
-          )}
-        </div>
+        {transactions.length > 0 && (
+          <div className="budget-actions">
+            <button
+              className="btn btn-secondary"
+              onClick={openSuggestions}
+            >
+              <Calculator size={16} />
+              Auto-Suggest Budgets
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Auto-Suggestion Modal */}
@@ -397,7 +389,7 @@ function Budget() {
               <div key={item.categoryId} className="budget-item">
                 <div className="budget-item-header">
                   <h4 className="budget-category-name">{item.categoryName}</h4>
-                  {!isEditing && (
+                  {!editingCategories.has(item.categoryId) && (
                     <div className="budget-amounts">
                       <span className="budget-spent">{formatCurrency(item.spent, currency)}</span>
                       {item.limit > 0 && (
@@ -408,20 +400,44 @@ function Budget() {
                       )}
                     </div>
                   )}
+                  {!editingCategories.has(item.categoryId) && (
+                    <button
+                      className="btn btn-small btn-secondary"
+                      onClick={() => startEditingCategory(item.categoryId)}
+                    >
+                      Edit
+                    </button>
+                  )}
                 </div>
 
-                {isEditing ? (
+                {editingCategories.has(item.categoryId) ? (
                   <div className="budget-edit-section">
                     <label className="form-label">Budget Limit</label>
-                    <input
-                      type="number"
-                      className="form-input"
-                      value={editingLimits[item.categoryId] || ''}
-                      onChange={(e) => updateLimit(item.categoryId, e.target.value)}
-                      placeholder="Enter budget limit"
-                      min="0"
-                      step="0.01"
-                    />
+                    <div className="budget-edit-input-row">
+                      <input
+                        type="number"
+                        className="form-input"
+                        value={editingLimits[item.categoryId] || ''}
+                        onChange={(e) => updateLimit(item.categoryId, e.target.value)}
+                        placeholder="Enter budget limit"
+                        min="0"
+                        step="0.01"
+                      />
+                      <div className="budget-edit-buttons">
+                        <button
+                          className="btn btn-small btn-primary"
+                          onClick={() => saveCategoryEdit(item.categoryId)}
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="btn btn-small btn-secondary"
+                          onClick={() => cancelCategoryEdit(item.categoryId)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 ) : item.limit > 0 ? (
                   <div className="budget-progress-section">
