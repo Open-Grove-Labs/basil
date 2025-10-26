@@ -10,6 +10,8 @@ function TransactionHistory() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [categories] = useState<Category[]>(loadCategories())
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
   const [selectedType, setSelectedType] = useState<'all' | 'income' | 'expense'>('all')
@@ -71,8 +73,14 @@ function TransactionHistory() {
   }, [transactions])
 
   const loadTransactionData = useCallback(() => {
-    const data = loadTransactions()
-    setTransactions(data)
+    setIsLoading(true)
+    setHasInitiallyLoaded(false)
+    
+    setTimeout(() => {
+      const data = loadTransactions()
+      setTransactions(data)
+      setHasInitiallyLoaded(true)
+    }, 0)
   }, [])
 
   const clearAllFilters = () => {
@@ -84,6 +92,11 @@ function TransactionHistory() {
   }
 
   const filterAndSortTransactions = useCallback(() => {
+    // Don't process if we haven't initially loaded yet
+    if (!hasInitiallyLoaded) {
+      return
+    }
+
     let filtered = [...transactions]
 
     // Filter by search term
@@ -142,7 +155,7 @@ function TransactionHistory() {
     })
 
     setFilteredTransactions(filtered)
-  }, [transactions, searchTerm, selectedCategory, selectedType, selectedMonth, selectedYear, sortBy, sortOrder])
+  }, [transactions, searchTerm, selectedCategory, selectedType, selectedMonth, selectedYear, sortBy, sortOrder, hasInitiallyLoaded])
 
   useEffect(() => {
     loadTransactionData()
@@ -151,6 +164,18 @@ function TransactionHistory() {
   useEffect(() => {
     filterAndSortTransactions()
   }, [filterAndSortTransactions])
+
+  // Set loading to false after initial filtering is complete
+  useEffect(() => {
+    if (hasInitiallyLoaded && isLoading) {
+      // Add a small delay to ensure the filtering effect has run
+      const timer = setTimeout(() => {
+        setIsLoading(false)
+      }, 100)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [hasInitiallyLoaded, isLoading])
 
   const handleDeleteTransaction = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this transaction?')) {
@@ -574,7 +599,15 @@ function TransactionHistory() {
 
       {/* Transactions List */}
       <div className="card">
-        {filteredTransactions.length === 0 ? (
+        {isLoading ? (
+          <div className="empty-state">
+            <div className="empty-icon">
+              <div className="loading-spinner"></div>
+            </div>
+            <h3>Loading Transactions...</h3>
+            <p>Processing your transaction history. This may take a moment for large datasets.</p>
+          </div>
+        ) : filteredTransactions.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">💸</div>
             <h3>No Transactions Found</h3>
