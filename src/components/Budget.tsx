@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Target, TrendingDown, Calculator, Save, X, Plus } from 'lucide-react'
-import { loadTransactions, loadCategories, loadSettings, formatCurrency } from '../utils/storage'
+import { loadTransactions, loadCategories, loadSettings } from '../utils/storage'
 import { subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns'
 import { parseLocalDate } from '../utils/storage'
 import type { Transaction, Category, CurrencyConfig } from '../types'
+import { formatCurrency } from '../utils/currency'
 
 interface BudgetItem {
   categoryId: string

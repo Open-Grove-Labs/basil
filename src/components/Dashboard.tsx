@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown } from 'lucide-react'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
-import { loadTransactions, loadCategories, parseLocalDate, formatCurrency } from '../utils/storage'
-import type { Transaction } from '../types'
+import { loadTransactions, loadCategories, parseLocalDate } from '../utils/storage'
+// import type { Transaction } from '../types'
+import { formatCurrency } from '../utils/currency'
 
 interface MonthlyData {
   income: number

@@ -229,18 +229,4 @@ export function loadSettings(): UserSettings {
   };
 }
 
-export function updateCurrency(currency: CurrencyConfig): void {
-  const settings = loadSettings();
-  settings.currency = currency;
-  saveSettings(settings);
-}
 
-// Utility function to format currency amount
-export function formatCurrency(amount: number, currency?: CurrencyConfig): string {
-  const currencyConfig = currency || loadSettings().currency;
-  const formattedAmount = amount.toFixed(2);
-  
-  return currencyConfig.position === 'before' 
-    ? `${currencyConfig.symbol}${formattedAmount}`
-    : `${formattedAmount} ${currencyConfig.symbol}`;
-}

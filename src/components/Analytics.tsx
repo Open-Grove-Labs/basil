@@ -23,8 +23,9 @@ import {
   isWithinInterval,
 } from "date-fns";
 import { BarChart3, PieChart as PieChartIcon } from "lucide-react";
-import { loadTransactions, loadCategories, parseLocalDate, formatCurrency } from '../utils/storage'
+import { loadTransactions, loadCategories, parseLocalDate } from '../utils/storage'
 import type { Transaction, CategorySpending, SpendingTrend } from "../types";
+import { formatCurrency } from "../utils/currency";
 
 type MonthlyCategoryData = {
   date: string;

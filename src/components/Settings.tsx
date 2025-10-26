@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Download, Trash2, Database, Palette, Shield, HelpCircle, Moon, Sun, DollarSign } from 'lucide-react'
-import { loadTransactions, clearAllData, loadSettings, updateCurrency, SUPPORTED_CURRENCIES } from '../utils/storage'
+import { loadTransactions, clearAllData, loadSettings, SUPPORTED_CURRENCIES } from '../utils/storage'
 import { clearMockData, shouldLoadMockData } from '../utils/mockData'
 import type { CurrencyConfig } from '../types'
+import { updateCurrency } from '../utils/currency'
 
 function Settings() {
   const [isExporting, setIsExporting] = useState(false)
@@ -227,7 +228,9 @@ function Settings() {
             <p className="currency-hint">
               Current selection: <strong>{selectedCurrency.symbol} {selectedCurrency.name}</strong>
               <br />
-              Example: {selectedCurrency.position === 'before' 
+              Example: formatCurrency()
+              
+              {selectedCurrency.position === 'before' 
                 ? `${selectedCurrency.symbol}123.45`
                 : `123.45 ${selectedCurrency.symbol}`
               }

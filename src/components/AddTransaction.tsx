@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { Plus, Check, PlusCircle, Edit, Trash2, X, Upload } from 'lucide-react'
 import { format } from 'date-fns'
-import { addTransaction, addCategory, getCategoriesByUsage, loadTransactions, loadSettings, parseLocalDate, formatCurrency, updateTransaction, deleteTransaction, loadCategories } from '../utils/storage'
+import { addTransaction, addCategory, getCategoriesByUsage, loadTransactions, loadSettings, parseLocalDate, updateTransaction, deleteTransaction, loadCategories } from '../utils/storage'
 import type { Category, Transaction, CurrencyConfig } from '../types'
 import ImportWizard from './ImportWizard'
+import { formatCurrency } from '../utils/currency'
 
 interface AddTransactionProps {
   onSuccess: () => void

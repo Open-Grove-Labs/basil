@@ -261,7 +261,6 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
       ] // Duplicates are already filtered out
 
       // Import each transaction
-      let imported = 0
       for (const transaction of allTransactionsToImport) {
         await addTransaction({
           amount: transaction.amount,
@@ -270,7 +269,6 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
           type: transaction.type || 'expense',
           date: transaction.date
         })
-        imported++
       }
 
       setCurrentStep('complete')

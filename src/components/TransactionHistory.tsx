@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Search, Trash2, Edit, Check, X, Edit3, PlusCircle } from 'lucide-react'
 import { format, subMonths, startOfMonth } from 'date-fns'
-import { loadTransactions, loadCategories, updateTransaction, deleteTransaction, parseLocalDate, formatCurrency, loadSettings, addCategory } from '../utils/storage'
+import { loadTransactions, loadCategories, updateTransaction, deleteTransaction, parseLocalDate, loadSettings, addCategory } from '../utils/storage'
 import { groupTransactionsByDescription, type TransactionGroup, type ImportedRow } from '../utils/smartImport'
 import type { Transaction, Category, CurrencyConfig } from '../types'
+import { formatCurrency } from '../utils/currency'
 
 function TransactionHistory() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
