@@ -621,6 +621,16 @@ function Analytics() {
                   })()}
                 </div>
               </div>
+
+              {/* Legal Disclaimer */}
+              <div className="legal-disclaimer">
+                <p>
+                  <strong>Disclaimer:</strong> The information provided by this application is for general 
+                  informational and educational purposes only and is not a substitute for professional 
+                  financial advice. This app is not a financial planner, broker, or tax advisor. We are 
+                  not engaged in rendering legal, tax, or financial advice.
+                </p>
+              </div>
             </div>
           )}
         </div>

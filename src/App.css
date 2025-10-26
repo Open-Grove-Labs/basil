@@ -2621,6 +2621,28 @@ legend.form-label {
   margin-bottom: 0;
 }
 
+.legal-disclaimer {
+  background: var(--color-warning-light, #fef3c7);
+  border: 1px solid var(--color-warning, #f59e0b);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.legal-disclaimer h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-warning-dark, #92400e);
+}
+
+.legal-disclaimer p {
+  margin: 0;
+  color: var(--color-warning-dark, #92400e);
+}
+
 /* Mobile Settings Styles */
 @media (max-width: 640px) {
   .settings-actions,

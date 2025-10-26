@@ -319,6 +319,19 @@ function App() {
                   is designed to be straightforward and user-friendly.
                 </p>
               </div>
+
+              <div className="help-section legal-disclaimer">
+                <h3>⚖️ Important Legal Notice</h3>
+                <p>
+                  <strong>
+                    The information provided by this application is for general 
+                    informational and educational purposes only and is not a 
+                    substitute for professional financial advice. This app is not 
+                    a financial planner, broker, or tax advisor. We are not 
+                    engaged in rendering legal, tax, or financial advice.
+                  </strong>
+                </p>
+              </div>
             </div>
           </div>
         </div>
