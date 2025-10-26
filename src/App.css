@@ -954,6 +954,14 @@ legend.form-label {
   opacity: 0.7;
 }
 
+.sparkline-line {
+  stroke: var(--category-color, #667eea);
+}
+
+.sparkline-dot {
+  fill: var(--category-color, #667eea);
+}
+
 .category-amounts {
   display: flex;
   align-items: center;
@@ -1081,6 +1089,7 @@ legend.form-label {
   height: 12px;
   border-radius: 50%;
   flex-shrink: 0;
+  background-color: var(--category-color, #667eea);
 }
 
 .category-details {

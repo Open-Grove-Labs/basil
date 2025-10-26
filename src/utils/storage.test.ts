@@ -8,8 +8,8 @@ import {
   updateTransaction,
   deleteTransaction,
   parseLocalDate,
-  formatCurrency,
 } from '../utils/storage'
+import { formatCurrency } from '../utils/currency'
 import { mockTransactions, mockCategories, mockLocalStorage } from '../test/test-utils'
 
 describe('Storage Utils', () => {

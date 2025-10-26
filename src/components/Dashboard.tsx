@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { TrendingUp, TrendingDown } from 'lucide-react'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { loadTransactions, loadCategories, parseLocalDate } from '../utils/storage'
-// import type { Transaction } from '../types'
 import { formatCurrency } from '../utils/currency'
 
 interface MonthlyData {
@@ -38,6 +37,17 @@ function Dashboard() {
   useEffect(() => {
     loadDashboardData()
   }, [])
+
+  // Apply category colors after render to avoid inline styles
+  useEffect(() => {
+    const categoryRows = document.querySelectorAll('.category-comparison-row[data-category-color]')
+    categoryRows.forEach((row) => {
+      const color = row.getAttribute('data-category-color')
+      if (color && row instanceof HTMLElement) {
+        row.style.setProperty('--category-color', color)
+      }
+    })
+  })
 
   const loadDashboardData = () => {
     const transactions = loadTransactions()
@@ -363,12 +373,13 @@ function Dashboard() {
               const color = currentCategory?.color || lastCategory?.color || secondLastCategory?.color || '#667eea'
               
               return (
-                <div key={categoryName} className="category-comparison-row">
+                <div 
+                  key={categoryName} 
+                  className="category-comparison-row"
+                  data-category-color={color}
+                >
                   <div className="category-info">
-                    <div 
-                      className="category-dot"
-                      style={{ backgroundColor: color }}
-                    />
+                    <div className="category-dot" />
                     <div className="category-name">{categoryName}</div>
                   </div>
                   
@@ -411,7 +422,7 @@ function Dashboard() {
                           <polyline
                             points={points}
                             fill="none"
-                            stroke={color}
+                            className="sparkline-line"
                             strokeWidth="1.5"
                             strokeLinejoin="round"
                             strokeLinecap="round"
@@ -422,7 +433,7 @@ function Dashboard() {
                               cx={(index * 20) + 10}
                               cy={20 - (value / maxValue) * 15}
                               r="1.5"
-                              fill={color}
+                              className="sparkline-dot"
                             />
                           ))}
                         </svg>

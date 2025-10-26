@@ -334,6 +334,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
             <div className="mapping-row">
               <label className="mapping-label">Date Column *</label>
               <select 
+                title="select date column from csv"
                 className="form-select"
                 value={columnMapping.dateColumn}
                 onChange={(e) => setColumnMapping({...columnMapping, dateColumn: e.target.value})}
@@ -348,6 +349,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
             <div className="mapping-row">
               <label className="mapping-label">Description Column *</label>
               <select 
+                title="select description column from csv"
                 className="form-select"
                 value={columnMapping.descriptionColumn}
                 onChange={(e) => setColumnMapping({...columnMapping, descriptionColumn: e.target.value})}
@@ -365,6 +367,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                 <div className="mapping-row">
                   <label className="mapping-label">Debit Column *</label>
                   <select 
+                    title="select debit column from csv"
                     className="form-select"
                     value={columnMapping.debitColumn || ''}
                     onChange={(e) => setColumnMapping({...columnMapping, debitColumn: e.target.value || undefined})}
@@ -379,6 +382,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                 <div className="mapping-row">
                   <label className="mapping-label">Credit Column *</label>
                   <select 
+                    title="select credit column from csv"
                     className="form-select"
                     value={columnMapping.creditColumn || ''}
                     onChange={(e) => setColumnMapping({...columnMapping, creditColumn: e.target.value || undefined})}
@@ -399,6 +403,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                 <div className="mapping-row">
                   <label className="mapping-label">Amount Column *</label>
                   <select 
+                    title="select amount column from csv"
                     className="form-select"
                     value={columnMapping.amountColumn}
                     onChange={(e) => setColumnMapping({...columnMapping, amountColumn: e.target.value})}
@@ -418,6 +423,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
               <div className="mapping-row">
                 <label className="mapping-label">Amount Column *</label>
                 <select 
+                  title="select amount column from csv"
                   className="form-select"
                   value={columnMapping.amountColumn}
                   onChange={(e) => setColumnMapping({...columnMapping, amountColumn: e.target.value})}
@@ -433,6 +439,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
             <div className="mapping-row">
               <label className="mapping-label">Category Column (Optional)</label>
               <select 
+                title="select category column from csv"
                 className="form-select"
                 value={columnMapping.categoryColumn || ''}
                 onChange={(e) => setColumnMapping({...columnMapping, categoryColumn: e.target.value || undefined})}
@@ -449,6 +456,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
               <div className="mapping-row">
                 <label className="mapping-label">Type Column (Optional)</label>
                 <select 
+                  title="select type column from csv"
                   className="form-select"
                   value={columnMapping.typeColumn || ''}
                   onChange={(e) => setColumnMapping({...columnMapping, typeColumn: e.target.value || undefined})}
@@ -469,6 +477,7 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
               <div className="mapping-row">
                 <label className="mapping-label">Created At Column (Optional)</label>
                 <select 
+                  title="select created at column from csv"
                   className="form-select"
                   value={columnMapping.createdAtColumn || ''}
                   onChange={(e) => setColumnMapping({...columnMapping, createdAtColumn: e.target.value || undefined})}
