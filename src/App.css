@@ -790,11 +790,13 @@ legend.form-label {
 
 .month-header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--color-border-light);
+  min-height: 3rem; /* Ensure consistent header height */
+  gap: 0.5rem;
 }
 
 .month-header h3 {
@@ -802,12 +804,19 @@ legend.form-label {
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--color-text-primary);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
 }
 
 .month-balance {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--color-text-muted);
+  white-space: nowrap;
+  text-align: center;
 }
 
 .month-balance .positive {
@@ -819,14 +828,15 @@ legend.form-label {
 }
 
 .month-details {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
   gap: 1rem;
+  min-height: 8rem; /* Consistent height for content alignment */
 }
 
 .month-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.75rem;
 }
 
@@ -835,6 +845,7 @@ legend.form-label {
   border-radius: 8px;
   color: var(--color-text-inverse);
   flex-shrink: 0;
+  margin-top: 0.125rem; /* Align with first line of text */
 }
 
 .month-item-icon.income {
@@ -885,6 +896,17 @@ legend.form-label {
 
 .month-item-change.negative {
   color: var(--color-expense);
+}
+
+.month-item-change-placeholder {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
+  height: 20px; /* Match the height of month-item-change */
+  visibility: hidden; /* Take up space but don't show content */
 }
 
 /* Category Comparison */
@@ -1788,6 +1810,17 @@ legend.form-label {
   }
 }
 
+/* Specific fix for ~770-1000px range where overflow is most problematic */
+@media (max-width: 1000px) and (min-width: 770px) {
+  .month-balance {
+    font-size: 0.75rem !important;
+  }
+  
+  .month-header h3 {
+    font-size: 0.9rem !important;
+  }
+}
+
 /* Mobile Layout */
 @media (max-width: 768px) {
   .app-header-container {
@@ -1836,10 +1869,68 @@ legend.form-label {
     padding: 1rem;
   }
   
+  /* Compact month cards for mobile */
+  .month-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    min-height: 2rem;
+    gap: 0.25rem;
+  }
+  
+  .month-header h3 {
+    font-size: 1rem;
+  }
+  
+  .month-balance {
+    font-size: 0.8rem;
+  }
+  
+  .month-details {
+    gap: 0.75rem;
+  }
+  
+  .month-item {
+    gap: 0.75rem;
+  }
+  
+  .month-item-details {
+    gap: 0.25rem;
+  }
+  
+  .month-item-label {
+    font-size: 0.8rem;
+  }
+  
+  .month-item-amount {
+    font-size: 1rem;
+  }
+  
+  .month-item-change,
+  .month-item-change-placeholder {
+    font-size: 0.7rem;
+    margin-top: 0.125rem;
+  }
+  
+  /* Hide previous months on mobile for cleaner layout */
+  .monthly-overview .month-card:not(.current-month) {
+    display: none;
+  }
+  
+  /* Make current month take full width on mobile */
+  .monthly-overview {
+    grid-template-columns: 1fr !important;
+  }
+  
   .month-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+    min-height: unset; /* Remove fixed height on mobile */
+  }
+  
+  .month-header h3 {
+    white-space: normal; /* Allow wrapping on mobile */
+    max-width: 100%;
     margin-bottom: 1rem;
   }
   

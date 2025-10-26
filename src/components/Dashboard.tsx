@@ -231,9 +231,10 @@ function Dashboard() {
               </div>
               <div className="month-item-details">
                 <div className="month-item-label">Income</div>
-                <div className="month-item-amount">
+                <div className="month-item-amount positive">
                   {formatCurrency(summary.secondLastMonth.income)}
                 </div>
+                <div className="month-item-change-placeholder"></div>
               </div>
             </div>
             <div className="month-item">
@@ -242,9 +243,10 @@ function Dashboard() {
               </div>
               <div className="month-item-details">
                 <div className="month-item-label">Expenses</div>
-                <div className="month-item-amount">
+                <div className="month-item-amount negative">
                   {formatCurrency(summary.secondLastMonth.expenses)}
                 </div>
+                <div className="month-item-change-placeholder"></div>
               </div>
             </div>
           </div>
@@ -267,9 +269,10 @@ function Dashboard() {
               </div>
               <div className="month-item-details">
                 <div className="month-item-label">Income</div>
-                <div className="month-item-amount">
+                <div className="month-item-amount positive">
                   {formatCurrency(summary.lastMonth.income)}
                 </div>
+                <div className="month-item-change-placeholder"></div>
               </div>
             </div>
             <div className="month-item">
@@ -278,9 +281,10 @@ function Dashboard() {
               </div>
               <div className="month-item-details">
                 <div className="month-item-label">Expenses</div>
-                <div className="month-item-amount">
+                <div className="month-item-amount negative">
                   {formatCurrency(summary.lastMonth.expenses)}
                 </div>
+                <div className="month-item-change-placeholder"></div>
               </div>
             </div>
           </div>
