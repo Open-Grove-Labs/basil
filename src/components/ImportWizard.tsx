@@ -8,6 +8,7 @@ import {
   Check,
   X,
   PlusCircle,
+  Edit3,
 } from "lucide-react";
 import {
   parseCSV,
@@ -355,327 +356,327 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
     />
   );
 
-  const renderMappingStepOld = () => (
-    <div className="import-step">
-      <div className="step-header">
-        <Edit3 size={32} className="step-icon" />
-        <h3>Map CSV Columns</h3>
-        <p>Confirm how your CSV columns match our transaction fields</p>
-      </div>
+  // const renderMappingStepOld = () => (
+  //   <div className="import-step">
+  //     <div className="step-header">
+  //       <Edit3 size={32} className="step-icon" />
+  //       <h3>Map CSV Columns</h3>
+  //       <p>Confirm how your CSV columns match our transaction fields</p>
+  //     </div>
 
-      {csvData.length > 0 && (
-        <>
-          <div className="column-mapping">
-            <div className="mapping-row">
-              <label className="mapping-label">Date Column *</label>
-              <select
-                title="select date column from csv"
-                className="form-select"
-                value={columnMapping.dateColumn}
-                onChange={(e) =>
-                  setColumnMapping({
-                    ...columnMapping,
-                    dateColumn: e.target.value,
-                  })
-                }
-              >
-                <option value="">Select date column...</option>
-                {Object.keys(csvData[0]).map((col) => (
-                  <option key={col} value={col}>
-                    {col}
-                  </option>
-                ))}
-              </select>
-            </div>
+  //     {csvData.length > 0 && (
+  //       <>
+  //         <div className="column-mapping">
+  //           <div className="mapping-row">
+  //             <label className="mapping-label">Date Column *</label>
+  //             <select
+  //               title="select date column from csv"
+  //               className="form-select"
+  //               value={columnMapping.dateColumn}
+  //               onChange={(e) =>
+  //                 setColumnMapping({
+  //                   ...columnMapping,
+  //                   dateColumn: e.target.value,
+  //                 })
+  //               }
+  //             >
+  //               <option value="">Select date column...</option>
+  //               {Object.keys(csvData[0]).map((col) => (
+  //                 <option key={col} value={col}>
+  //                   {col}
+  //                 </option>
+  //               ))}
+  //             </select>
+  //           </div>
 
-            <div className="mapping-row">
-              <label className="mapping-label">Description Column *</label>
-              <select
-                title="select description column from csv"
-                className="form-select"
-                value={columnMapping.descriptionColumn}
-                onChange={(e) =>
-                  setColumnMapping({
-                    ...columnMapping,
-                    descriptionColumn: e.target.value,
-                  })
-                }
-              >
-                <option value="">Select description column...</option>
-                {Object.keys(csvData[0]).map((col) => (
-                  <option key={col} value={col}>
-                    {col}
-                  </option>
-                ))}
-              </select>
-            </div>
+  //           <div className="mapping-row">
+  //             <label className="mapping-label">Description Column *</label>
+  //             <select
+  //               title="select description column from csv"
+  //               className="form-select"
+  //               value={columnMapping.descriptionColumn}
+  //               onChange={(e) =>
+  //                 setColumnMapping({
+  //                   ...columnMapping,
+  //                   descriptionColumn: e.target.value,
+  //                 })
+  //               }
+  //             >
+  //               <option value="">Select description column...</option>
+  //               {Object.keys(csvData[0]).map((col) => (
+  //                 <option key={col} value={col}>
+  //                   {col}
+  //                 </option>
+  //               ))}
+  //             </select>
+  //           </div>
 
-            {/* Show either single amount column OR debit/credit columns */}
-            {columnMapping.debitColumn || columnMapping.creditColumn ? (
-              <>
-                <div className="mapping-row">
-                  <label className="mapping-label">Debit Column *</label>
-                  <select
-                    title="select debit column from csv"
-                    className="form-select"
-                    value={columnMapping.debitColumn || ""}
-                    onChange={(e) =>
-                      setColumnMapping({
-                        ...columnMapping,
-                        debitColumn: e.target.value || undefined,
-                      })
-                    }
-                  >
-                    <option value="">Select debit column...</option>
-                    {Object.keys(csvData[0]).map((col) => (
-                      <option key={col} value={col}>
-                        {col}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+  //           {/* Show either single amount column OR debit/credit columns */}
+  //           {columnMapping.debitColumn || columnMapping.creditColumn ? (
+  //             <>
+  //               <div className="mapping-row">
+  //                 <label className="mapping-label">Debit Column *</label>
+  //                 <select
+  //                   title="select debit column from csv"
+  //                   className="form-select"
+  //                   value={columnMapping.debitColumn || ""}
+  //                   onChange={(e) =>
+  //                     setColumnMapping({
+  //                       ...columnMapping,
+  //                       debitColumn: e.target.value || undefined,
+  //                     })
+  //                   }
+  //                 >
+  //                   <option value="">Select debit column...</option>
+  //                   {Object.keys(csvData[0]).map((col) => (
+  //                     <option key={col} value={col}>
+  //                       {col}
+  //                     </option>
+  //                   ))}
+  //                 </select>
+  //               </div>
 
-                <div className="mapping-row">
-                  <label className="mapping-label">Credit Column *</label>
-                  <select
-                    title="select credit column from csv"
-                    className="form-select"
-                    value={columnMapping.creditColumn || ""}
-                    onChange={(e) =>
-                      setColumnMapping({
-                        ...columnMapping,
-                        creditColumn: e.target.value || undefined,
-                      })
-                    }
-                  >
-                    <option value="">Select credit column...</option>
-                    {Object.keys(csvData[0]).map((col) => (
-                      <option key={col} value={col}>
-                        {col}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+  //               <div className="mapping-row">
+  //                 <label className="mapping-label">Credit Column *</label>
+  //                 <select
+  //                   title="select credit column from csv"
+  //                   className="form-select"
+  //                   value={columnMapping.creditColumn || ""}
+  //                   onChange={(e) =>
+  //                     setColumnMapping({
+  //                       ...columnMapping,
+  //                       creditColumn: e.target.value || undefined,
+  //                     })
+  //                   }
+  //                 >
+  //                   <option value="">Select credit column...</option>
+  //                   {Object.keys(csvData[0]).map((col) => (
+  //                     <option key={col} value={col}>
+  //                       {col}
+  //                     </option>
+  //                   ))}
+  //                 </select>
+  //               </div>
 
-                <div className="mapping-note">
-                  <small>
-                    💡 Bank format detected: Debit = money out (expenses),
-                    Credit = money in (income)
-                  </small>
-                </div>
-              </>
-            ) : columnMapping.isBasilCSV ? (
-              <>
-                <div className="mapping-row">
-                  <label className="mapping-label">Amount Column *</label>
-                  <select
-                    title="select amount column from csv"
-                    className="form-select"
-                    value={columnMapping.amountColumn}
-                    onChange={(e) =>
-                      setColumnMapping({
-                        ...columnMapping,
-                        amountColumn: e.target.value,
-                      })
-                    }
-                  >
-                    <option value="">Select amount column...</option>
-                    {Object.keys(csvData[0]).map((col) => (
-                      <option key={col} value={col}>
-                        {col}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+  //               <div className="mapping-note">
+  //                 <small>
+  //                   💡 Bank format detected: Debit = money out (expenses),
+  //                   Credit = money in (income)
+  //                 </small>
+  //               </div>
+  //             </>
+  //           ) : columnMapping.isBasilCSV ? (
+  //             <>
+  //               <div className="mapping-row">
+  //                 <label className="mapping-label">Amount Column *</label>
+  //                 <select
+  //                   title="select amount column from csv"
+  //                   className="form-select"
+  //                   value={columnMapping.amountColumn}
+  //                   onChange={(e) =>
+  //                     setColumnMapping({
+  //                       ...columnMapping,
+  //                       amountColumn: e.target.value,
+  //                     })
+  //                   }
+  //                 >
+  //                   <option value="">Select amount column...</option>
+  //                   {Object.keys(csvData[0]).map((col) => (
+  //                     <option key={col} value={col}>
+  //                       {col}
+  //                     </option>
+  //                   ))}
+  //                 </select>
+  //               </div>
 
-                <div className="mapping-note">
-                  <small>
-                    🌿 Basil CSV detected: Your exported data with Type and
-                    Category columns
-                  </small>
-                </div>
-              </>
-            ) : (
-              <div className="mapping-row">
-                <label className="mapping-label">Amount Column *</label>
-                <select
-                  title="select amount column from csv"
-                  className="form-select"
-                  value={columnMapping.amountColumn}
-                  onChange={(e) =>
-                    setColumnMapping({
-                      ...columnMapping,
-                      amountColumn: e.target.value,
-                    })
-                  }
-                >
-                  <option value="">Select amount column...</option>
-                  {Object.keys(csvData[0]).map((col) => (
-                    <option key={col} value={col}>
-                      {col}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+  //               <div className="mapping-note">
+  //                 <small>
+  //                   🌿 Basil CSV detected: Your exported data with Type and
+  //                   Category columns
+  //                 </small>
+  //               </div>
+  //             </>
+  //           ) : (
+  //             <div className="mapping-row">
+  //               <label className="mapping-label">Amount Column *</label>
+  //               <select
+  //                 title="select amount column from csv"
+  //                 className="form-select"
+  //                 value={columnMapping.amountColumn}
+  //                 onChange={(e) =>
+  //                   setColumnMapping({
+  //                     ...columnMapping,
+  //                     amountColumn: e.target.value,
+  //                   })
+  //                 }
+  //               >
+  //                 <option value="">Select amount column...</option>
+  //                 {Object.keys(csvData[0]).map((col) => (
+  //                   <option key={col} value={col}>
+  //                     {col}
+  //                   </option>
+  //                 ))}
+  //               </select>
+  //             </div>
+  //           )}
 
-            <div className="mapping-row">
-              <label className="mapping-label">
-                Category Column (Optional)
-              </label>
-              <select
-                title="select category column from csv"
-                className="form-select"
-                value={columnMapping.categoryColumn || ""}
-                onChange={(e) =>
-                  setColumnMapping({
-                    ...columnMapping,
-                    categoryColumn: e.target.value || undefined,
-                  })
-                }
-              >
-                <option value="">No category column</option>
-                {Object.keys(csvData[0]).map((col) => (
-                  <option key={col} value={col}>
-                    {col}
-                  </option>
-                ))}
-              </select>
-            </div>
+  //           <div className="mapping-row">
+  //             <label className="mapping-label">
+  //               Category Column (Optional)
+  //             </label>
+  //             <select
+  //               title="select category column from csv"
+  //               className="form-select"
+  //               value={columnMapping.categoryColumn || ""}
+  //               onChange={(e) =>
+  //                 setColumnMapping({
+  //                   ...columnMapping,
+  //                   categoryColumn: e.target.value || undefined,
+  //                 })
+  //               }
+  //             >
+  //               <option value="">No category column</option>
+  //               {Object.keys(csvData[0]).map((col) => (
+  //                 <option key={col} value={col}>
+  //                   {col}
+  //                 </option>
+  //               ))}
+  //             </select>
+  //           </div>
 
-            {/* Type column for Basil or other CSV formats */}
-            {(columnMapping.isBasilCSV || columnMapping.typeColumn) && (
-              <div className="mapping-row">
-                <label className="mapping-label">Type Column (Optional)</label>
-                <select
-                  title="select type column from csv"
-                  className="form-select"
-                  value={columnMapping.typeColumn || ""}
-                  onChange={(e) =>
-                    setColumnMapping({
-                      ...columnMapping,
-                      typeColumn: e.target.value || undefined,
-                    })
-                  }
-                >
-                  <option value="">No type column</option>
-                  {Object.keys(csvData[0]).map((col) => (
-                    <option key={col} value={col}>
-                      {col}
-                    </option>
-                  ))}
-                </select>
-                {columnMapping.isBasilCSV && (
-                  <small className="mapping-hint">
-                    Maps to Income/Expense from your Basil export
-                  </small>
-                )}
-              </div>
-            )}
+  //           {/* Type column for Basil or other CSV formats */}
+  //           {(columnMapping.isBasilCSV || columnMapping.typeColumn) && (
+  //             <div className="mapping-row">
+  //               <label className="mapping-label">Type Column (Optional)</label>
+  //               <select
+  //                 title="select type column from csv"
+  //                 className="form-select"
+  //                 value={columnMapping.typeColumn || ""}
+  //                 onChange={(e) =>
+  //                   setColumnMapping({
+  //                     ...columnMapping,
+  //                     typeColumn: e.target.value || undefined,
+  //                   })
+  //                 }
+  //               >
+  //                 <option value="">No type column</option>
+  //                 {Object.keys(csvData[0]).map((col) => (
+  //                   <option key={col} value={col}>
+  //                     {col}
+  //                   </option>
+  //                 ))}
+  //               </select>
+  //               {columnMapping.isBasilCSV && (
+  //                 <small className="mapping-hint">
+  //                   Maps to Income/Expense from your Basil export
+  //                 </small>
+  //               )}
+  //             </div>
+  //           )}
 
-            {/* Created At column for Basil CSV */}
-            {columnMapping.isBasilCSV && (
-              <div className="mapping-row">
-                <label className="mapping-label">
-                  Created At Column (Optional)
-                </label>
-                <select
-                  title="select created at column from csv"
-                  className="form-select"
-                  value={columnMapping.createdAtColumn || ""}
-                  onChange={(e) =>
-                    setColumnMapping({
-                      ...columnMapping,
-                      createdAtColumn: e.target.value || undefined,
-                    })
-                  }
-                >
-                  <option value="">No created at column</option>
-                  {Object.keys(csvData[0]).map((col) => (
-                    <option key={col} value={col}>
-                      {col}
-                    </option>
-                  ))}
-                </select>
-                <small className="mapping-hint">
-                  Preserves original transaction creation timestamps
-                </small>
-              </div>
-            )}
-          </div>
+  //           {/* Created At column for Basil CSV */}
+  //           {columnMapping.isBasilCSV && (
+  //             <div className="mapping-row">
+  //               <label className="mapping-label">
+  //                 Created At Column (Optional)
+  //               </label>
+  //               <select
+  //                 title="select created at column from csv"
+  //                 className="form-select"
+  //                 value={columnMapping.createdAtColumn || ""}
+  //                 onChange={(e) =>
+  //                   setColumnMapping({
+  //                     ...columnMapping,
+  //                     createdAtColumn: e.target.value || undefined,
+  //                   })
+  //                 }
+  //               >
+  //                 <option value="">No created at column</option>
+  //                 {Object.keys(csvData[0]).map((col) => (
+  //                   <option key={col} value={col}>
+  //                     {col}
+  //                   </option>
+  //                 ))}
+  //               </select>
+  //               <small className="mapping-hint">
+  //                 Preserves original transaction creation timestamps
+  //               </small>
+  //             </div>
+  //           )}
+  //         </div>
 
-          <div className="preview-section">
-            <h4>Preview (first 3 rows):</h4>
-            <div className="preview-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Description</th>
-                    {columnMapping.debitColumn || columnMapping.creditColumn ? (
-                      <>
-                        <th>Debit</th>
-                        <th>Credit</th>
-                      </>
-                    ) : (
-                      <th>Amount</th>
-                    )}
-                    {columnMapping.categoryColumn && <th>Category</th>}
-                    {columnMapping.typeColumn && <th>Type</th>}
-                  </tr>
-                </thead>
-                <tbody>
-                  {csvData.slice(0, 3).map((row, index) => (
-                    <tr key={index}>
-                      <td>
-                        {columnMapping.dateColumn
-                          ? String(row[columnMapping.dateColumn])
-                          : "—"}
-                      </td>
-                      <td>
-                        {columnMapping.descriptionColumn
-                          ? String(row[columnMapping.descriptionColumn])
-                          : "—"}
-                      </td>
-                      {columnMapping.debitColumn ||
-                      columnMapping.creditColumn ? (
-                        <>
-                          <td>
-                            {columnMapping.debitColumn
-                              ? String(row[columnMapping.debitColumn] || "")
-                              : "—"}
-                          </td>
-                          <td>
-                            {columnMapping.creditColumn
-                              ? String(row[columnMapping.creditColumn] || "")
-                              : "—"}
-                          </td>
-                        </>
-                      ) : (
-                        <td>
-                          {columnMapping.amountColumn
-                            ? String(row[columnMapping.amountColumn])
-                            : "—"}
-                        </td>
-                      )}
-                      {columnMapping.categoryColumn && (
-                        <td>
-                          {String(row[columnMapping.categoryColumn] || "—")}
-                        </td>
-                      )}
-                      {columnMapping.typeColumn && (
-                        <td>{String(row[columnMapping.typeColumn] || "—")}</td>
-                      )}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
+  //         <div className="preview-section">
+  //           <h4>Preview (first 3 rows):</h4>
+  //           <div className="preview-table">
+  //             <table>
+  //               <thead>
+  //                 <tr>
+  //                   <th>Date</th>
+  //                   <th>Description</th>
+  //                   {columnMapping.debitColumn || columnMapping.creditColumn ? (
+  //                     <>
+  //                       <th>Debit</th>
+  //                       <th>Credit</th>
+  //                     </>
+  //                   ) : (
+  //                     <th>Amount</th>
+  //                   )}
+  //                   {columnMapping.categoryColumn && <th>Category</th>}
+  //                   {columnMapping.typeColumn && <th>Type</th>}
+  //                 </tr>
+  //               </thead>
+  //               <tbody>
+  //                 {csvData.slice(0, 3).map((row, index) => (
+  //                   <tr key={index}>
+  //                     <td>
+  //                       {columnMapping.dateColumn
+  //                         ? String(row[columnMapping.dateColumn])
+  //                         : "—"}
+  //                     </td>
+  //                     <td>
+  //                       {columnMapping.descriptionColumn
+  //                         ? String(row[columnMapping.descriptionColumn])
+  //                         : "—"}
+  //                     </td>
+  //                     {columnMapping.debitColumn ||
+  //                     columnMapping.creditColumn ? (
+  //                       <>
+  //                         <td>
+  //                           {columnMapping.debitColumn
+  //                             ? String(row[columnMapping.debitColumn] || "")
+  //                             : "—"}
+  //                         </td>
+  //                         <td>
+  //                           {columnMapping.creditColumn
+  //                             ? String(row[columnMapping.creditColumn] || "")
+  //                             : "—"}
+  //                         </td>
+  //                       </>
+  //                     ) : (
+  //                       <td>
+  //                         {columnMapping.amountColumn
+  //                           ? String(row[columnMapping.amountColumn])
+  //                           : "—"}
+  //                       </td>
+  //                     )}
+  //                     {columnMapping.categoryColumn && (
+  //                       <td>
+  //                         {String(row[columnMapping.categoryColumn] || "—")}
+  //                       </td>
+  //                     )}
+  //                     {columnMapping.typeColumn && (
+  //                       <td>{String(row[columnMapping.typeColumn] || "—")}</td>
+  //                     )}
+  //                   </tr>
+  //                 ))}
+  //               </tbody>
+  //             </table>
+  //           </div>
+  //         </div>
+  //       </>
+  //     )}
+  //   </div>
+  // );
 
   const renderDuplicatesStep = () => {
     const duplicates = parsedTransactions.filter((t) => t.isDuplicate);

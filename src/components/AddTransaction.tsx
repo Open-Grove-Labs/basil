@@ -513,6 +513,8 @@ function AddTransaction({ onSuccess }: AddTransactionProps) {
     (cat) => cat.type === formData.type,
   );
 
+
+
   return (
     <div className="page-content">
       {/* Success Message */}
@@ -590,10 +592,10 @@ function AddTransaction({ onSuccess }: AddTransactionProps) {
                   type="button"
                   className={`type-button ${formData.type === "expense" ? "active expense" : ""}`}
                   onClick={() => handleInputChange("type", "expense")}
-                  role="radio"
-                  aria-checked={formData.type === "expense"}
+                  aria-pressed="true"
                   aria-label="Expense - Money spent"
                   tabIndex={formData.type === "expense" ? 0 : -1}
+                  {...(formData.type === "expense" && { "data-selected": "true" })}
                 >
                   Expense
                 </button>
@@ -601,10 +603,10 @@ function AddTransaction({ onSuccess }: AddTransactionProps) {
                   type="button"
                   className={`type-button ${formData.type === "income" ? "active income" : ""}`}
                   onClick={() => handleInputChange("type", "income")}
-                  role="radio"
-                  aria-checked={formData.type === "income"}
+                  aria-pressed="true"
                   aria-label="Income - Money received"
                   tabIndex={formData.type === "income" ? 0 : -1}
+                  {...(formData.type === "income" && { "data-selected": "true" })}
                 >
                   Income
                 </button>
@@ -631,7 +633,7 @@ function AddTransaction({ onSuccess }: AddTransactionProps) {
                   placeholder="0.00"
                   required
                   autoComplete="off"
-                  aria-invalid={fieldErrors.amount ? "true" : "false"}
+                  {...(fieldErrors.amount ? { "aria-invalid": "true" } : { "aria-invalid": "false" })}
                   aria-describedby={
                     fieldErrors.amount ? "amount-error" : undefined
                   }
@@ -670,7 +672,7 @@ function AddTransaction({ onSuccess }: AddTransactionProps) {
                   placeholder="What was this for?"
                   required
                   autoComplete="off"
-                  aria-invalid={fieldErrors.description ? "true" : "false"}
+                  {...(fieldErrors.description ? { "aria-invalid": "true" } : { "aria-invalid": "false" })}
                   aria-describedby={
                     fieldErrors.description ? "description-error" : undefined
                   }
@@ -714,7 +716,7 @@ function AddTransaction({ onSuccess }: AddTransactionProps) {
                       }
                     }}
                     required
-                    aria-invalid={fieldErrors.category ? "true" : "false"}
+                    {...(fieldErrors.category ? { "aria-invalid": "true" } : { "aria-invalid": "false" })}
                     aria-describedby={
                       fieldErrors.category ? "category-error" : undefined
                     }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Target, TrendingDown, Calculator, Save, X } from "lucide-react";
+import { Target, TrendingDown, Calculator, X } from "lucide-react";
 import {
   loadTransactions,
   loadCategories,

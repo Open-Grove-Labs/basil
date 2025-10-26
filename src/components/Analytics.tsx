@@ -55,10 +55,10 @@ function Analytics() {
   >(["3m", "6m", "1y"]);
 
   // Calculate available time ranges based on transaction history
-  const getAvailableTimeRanges = useCallback(() => {
+  const getAvailableTimeRanges = useCallback((): Array<"3m" | "6m" | "1y" | "2y" | "3y"> => {
     const allTransactions = loadTransactions();
     if (allTransactions.length === 0) {
-      return ["3m", "6m", "1y"] as const; // Default options if no transactions
+      return ["3m", "6m", "1y"]; // Default options if no transactions
     }
 
     // Find oldest transaction
