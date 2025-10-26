@@ -2092,6 +2092,9 @@ legend.form-label {
 }
 
 .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 1.5rem 1.5rem 0;
 }
 
@@ -2189,6 +2192,16 @@ legend.form-label {
 .modal-close-button:hover {
   background: var(--color-border-light);
   color: var(--color-text-primary);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0 1.5rem 1.5rem;
+  border-top: 1px solid var(--color-border-light);
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
 }
 
 .help-modal .modal-body {
@@ -2722,6 +2735,21 @@ legend.form-label {
   gap: 0.5rem;
   font-size: 0.8125rem;
   color: var(--color-warning);
+}
+
+.no-duplicates-message {
+  text-align: center;
+  padding: 2rem;
+  background: var(--color-surface);
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border-light);
+}
+
+.no-duplicates-message p {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--color-success);
+  font-weight: 500;
 }
 
 /* Bulk Edit */

@@ -118,13 +118,14 @@ function Budget() {
 
     budgetItems.forEach(item => {
       if (target === 'reduce') {
-        // For reduce: use 3 months average, then apply 10% reduction for certain categories
-        const avgSpending = calculateAverageSpending(item.categoryName, 3)
-        if (REDUCIBLE_CATEGORIES.includes(item.categoryName)) {
-          suggestions[item.categoryId] = Math.round(avgSpending * 0.9)
-        } else {
-          suggestions[item.categoryId] = avgSpending
-        }
+        // For reduce: use 2 months average, then apply 10% reduction for certain categories
+        const avgSpending = calculateAverageSpending(item.categoryName, 2)
+        const isReducible = REDUCIBLE_CATEGORIES.includes(item.categoryName)
+        const suggestedAmount = isReducible ? Math.round(avgSpending * 0.9) : avgSpending
+        
+
+        
+        suggestions[item.categoryId] = suggestedAmount
       } else {
         // For stabilize: use 2 months average
         const avgSpending = calculateAverageSpending(item.categoryName, 2)

@@ -99,8 +99,11 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
       const nonDuplicateIds = processed.filter(t => !t.isDuplicate).map(t => t.id)
       setSelectedTransactions(new Set(nonDuplicateIds))
       
-      // Go to duplicates review step first
-      setCurrentStep('duplicates')
+      // Check if there are any duplicates
+      const hasDuplicates = processed.some(t => t.isDuplicate)
+      
+      // Go to duplicates review step only if there are duplicates, otherwise go directly to bulk edit
+      setCurrentStep(hasDuplicates ? 'duplicates' : 'bulk-edit')
       
       setIsProcessing(false)
     }, 1000)
@@ -500,7 +503,6 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
                     )}
                     {columnMapping.categoryColumn && <th>Category</th>}
                     {columnMapping.typeColumn && <th>Type</th>}
-                    <th>Category</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -535,6 +537,22 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
 
   const renderDuplicatesStep = () => {
     const duplicates = parsedTransactions.filter(t => t.isDuplicate)
+    
+    if (duplicates.length === 0) {
+      return (
+        <div className="import-step">
+          <div className="step-header">
+            <CheckCircle size={32} className="step-icon success" />
+            <h3>No Duplicates Found</h3>
+            <p>All {parsedTransactions.length} transactions appear to be unique</p>
+          </div>
+          
+          <div className="no-duplicates-message">
+            <p>✅ Ready to proceed with categorization</p>
+          </div>
+        </div>
+      )
+    }
     
     return (
       <div className="import-step">
