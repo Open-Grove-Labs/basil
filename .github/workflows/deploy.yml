@@ -35,17 +35,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install dependencies and build
-        run: |
-          npm install
-          npm run build
-          ls .
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Install dependencies
+        run: npm install
+      - name: Run build
+        run: npm run build
+      - name: Upload dist folder as artifact
+        uses: actions/upload-artifact@v4
         with:
-          path: './dist/'
+          name: build-artifacts
+          path: dist/
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
