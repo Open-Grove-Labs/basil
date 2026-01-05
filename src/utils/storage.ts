@@ -12,6 +12,18 @@ export const parseLocalDate = (dateString: string): Date => {
   return new Date(year, month - 1, day); // month is 0-indexed in JavaScript
 };
 
+// Helper function to filter transactions by date range
+export const filterTransactionsByDateRange = (
+  transactions: Transaction[],
+  startDate: Date,
+  endDate: Date,
+): Transaction[] => {
+  return transactions.filter((t) => {
+    const transactionDate = parseLocalDate(t.date);
+    return transactionDate >= startDate && transactionDate <= endDate;
+  });
+};
+
 const STORAGE_KEYS = {
   TRANSACTIONS: "basil_transactions",
   CATEGORIES: "basil_categories",

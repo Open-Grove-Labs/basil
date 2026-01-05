@@ -1531,6 +1531,7 @@ legend.form-label {
 }
 
 .legend-item {
+  cursor: "pointer";
   display: flex;
   align-items: center;
   gap: 0.75rem;

@@ -27,6 +27,7 @@ import {
   loadTransactions,
   loadCategories,
   parseLocalDate,
+  filterTransactionsByDateRange,
 } from "../utils/storage";
 import type { Transaction, CategorySpending, SpendingTrend } from "../types";
 import { formatCurrency } from "../utils/currency";
@@ -125,11 +126,10 @@ function Analytics() {
       startDate = subMonths(now, months);
     }
 
-    const filteredTransactions = allTransactions.filter(
-      (t) => {
-        const transactionDate = parseLocalDate(t.date);
-        return transactionDate >= startDate && transactionDate <= endDate;
-      },
+    const filteredTransactions = filterTransactionsByDateRange(
+      allTransactions,
+      startDate,
+      endDate,
     );
 
     setTransactions(filteredTransactions);
@@ -851,7 +851,6 @@ function Analytics() {
                     key={category.category}
                     className={`legend-item ${selectedCategory === category.category ? "selected" : ""}`}
                     onClick={() => handleCategoryClick(category.category)}
-                    style={{ cursor: "pointer" }}
                   >
                     <div
                       className="legend-color"

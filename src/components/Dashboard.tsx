@@ -5,7 +5,7 @@ import {
   loadTransactions,
   loadCategories,
   loadBudgets,
-  parseLocalDate,
+  filterTransactionsByDateRange,
 } from "../utils/storage";
 import { formatCurrency } from "../utils/currency";
 
@@ -76,28 +76,23 @@ function Dashboard() {
     const secondLastMonthEnd = endOfMonth(secondLastMonthDate);
 
     // Filter transactions by month
-    const currentMonthTransactions = transactions.filter((t) => {
-      const transactionDate = parseLocalDate(t.date);
-      return (
-        transactionDate >= currentMonthStart &&
-        transactionDate <= currentMonthEnd
-      );
-    });
+    const currentMonthTransactions = filterTransactionsByDateRange(
+      transactions,
+      currentMonthStart,
+      currentMonthEnd,
+    );
 
-    const lastMonthTransactions = transactions.filter((t) => {
-      const transactionDate = parseLocalDate(t.date);
-      return (
-        transactionDate >= lastMonthStart && transactionDate <= lastMonthEnd
-      );
-    });
+    const lastMonthTransactions = filterTransactionsByDateRange(
+      transactions,
+      lastMonthStart,
+      lastMonthEnd,
+    );
 
-    const secondLastMonthTransactions = transactions.filter((t) => {
-      const transactionDate = parseLocalDate(t.date);
-      return (
-        transactionDate >= secondLastMonthStart &&
-        transactionDate <= secondLastMonthEnd
-      );
-    });
+    const secondLastMonthTransactions = filterTransactionsByDateRange(
+      transactions,
+      secondLastMonthStart,
+      secondLastMonthEnd,
+    );
 
     // Calculate current month data
     const currentMonthIncome = currentMonthTransactions
