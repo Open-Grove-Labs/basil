@@ -1,33 +1,17 @@
-import { Edit3, ArrowRight } from "lucide-react";
+import { Edit3 } from "lucide-react";
 import type { ColumnMapping, ImportedRow } from "../../utils/smart-import";
 
 interface MappingStepProps {
   csvData: ImportedRow[];
   columnMapping: ColumnMapping;
   onColumnMappingChange: (mapping: ColumnMapping) => void;
-  onNext: () => void;
 }
 
 export function MappingStep({
   csvData,
   columnMapping,
   onColumnMappingChange,
-  onNext,
 }: MappingStepProps) {
-  const handleMappingConfirm = () => {
-    // Validate required columns
-    const hasAmountData =
-      columnMapping.amountColumn ||
-      (columnMapping.debitColumn && columnMapping.creditColumn);
-
-    if (!columnMapping.dateColumn || !columnMapping.descriptionColumn || !hasAmountData) {
-      alert("Please select all required columns (Date, Description, and Amount/Debit+Credit)");
-      return;
-    }
-
-    onNext();
-  };
-
   if (csvData.length === 0) {
     return null;
   }
@@ -116,12 +100,6 @@ export function MappingStep({
       </div>
 
       <PreviewTable csvData={csvData} columnMapping={columnMapping} />
-
-      <div className="step-actions">
-        <button className="btn btn-primary" onClick={handleMappingConfirm}>
-          Continue <ArrowRight size={16} />
-        </button>
-      </div>
     </div>
   );
 }

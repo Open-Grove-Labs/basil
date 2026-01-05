@@ -352,7 +352,6 @@ function ImportWizard({ onComplete, onCancel }: ImportWizardProps) {
       csvData={csvData}
       columnMapping={columnMapping}
       onColumnMappingChange={setColumnMapping}
-      onNext={handleMappingConfirm}
     />
   );
 

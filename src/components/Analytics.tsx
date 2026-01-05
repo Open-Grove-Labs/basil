@@ -45,20 +45,21 @@ function Analytics() {
   const [monthlyCategoryBreakdown, setMonthlyCategoryBreakdown] = useState<
     MonthlyCategoryData[]
   >([]);
-  const [timeRange, setTimeRange] = useState<"3m" | "6m" | "1y" | "2y" | "3y">(
+  const [timeRange, setTimeRange] = useState<"1m" | "lm" | "3m" | "6m" | "1y" | "2y" | "3y">(
     "6m",
   );
   const [chartType, setChartType] = useState<"pie" | "bar">("pie");
   const [projectionTrends, setProjectionTrends] = useState<SpendingTrend[]>([]);
   const [availableTimeRanges, setAvailableTimeRanges] = useState<
-    Array<"3m" | "6m" | "1y" | "2y" | "3y">
-  >(["3m", "6m", "1y"]);
+    Array<"1m" | "lm" | "3m" | "6m" | "1y" | "2y" | "3y">
+  >(["1m", "lm", "3m", "6m", "1y"]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   // Calculate available time ranges based on transaction history
-  const getAvailableTimeRanges = useCallback((): Array<"3m" | "6m" | "1y" | "2y" | "3y"> => {
+  const getAvailableTimeRanges = useCallback((): Array<"1m" | "lm" | "3m" | "6m" | "1y" | "2y" | "3y"> => {
     const allTransactions = loadTransactions();
     if (allTransactions.length === 0) {
-      return ["3m", "6m", "1y"]; // Default options if no transactions
+      return ["1m", "lm", "3m", "6m", "1y"]; // Default options if no transactions
     }
 
     // Find oldest transaction
@@ -71,7 +72,9 @@ function Analytics() {
       (now.getTime() - oldestDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44),
     ); // Average month length
 
-    const availableRanges: Array<"3m" | "6m" | "1y" | "2y" | "3y"> = [
+    const availableRanges: Array<"1m" | "lm" | "3m" | "6m" | "1y" | "2y" | "3y"> = [
+      "1m",
+      "lm",
       "3m",
       "6m",
       "1y",
@@ -97,20 +100,34 @@ function Analytics() {
 
     // Filter transactions based on time range
     const now = new Date();
-    const months =
-      timeRange === "3m"
-        ? 3
-        : timeRange === "6m"
-          ? 6
-          : timeRange === "1y"
-            ? 12
-            : timeRange === "2y"
-              ? 24
-              : 36; // 3y
-    const startDate = subMonths(now, months);
+    let startDate: Date;
+    let endDate: Date = now;
+    
+    if (timeRange === "lm") {
+      // Last month: from first day of last month to last day of last month
+      startDate = startOfMonth(subMonths(now, 1));
+      endDate = endOfMonth(subMonths(now, 1));
+    } else {
+      const months =
+        timeRange === "1m"
+          ? 1
+          : timeRange === "3m"
+            ? 3
+            : timeRange === "6m"
+              ? 6
+              : timeRange === "1y"
+                ? 12
+                : timeRange === "2y"
+                  ? 24
+                  : 36; // 3y
+      startDate = subMonths(now, months);
+    }
 
     const filteredTransactions = allTransactions.filter(
-      (t) => parseLocalDate(t.date) >= startDate,
+      (t) => {
+        const transactionDate = parseLocalDate(t.date);
+        return transactionDate >= startDate && transactionDate <= endDate;
+      },
     );
 
     setTransactions(filteredTransactions);
@@ -158,9 +175,21 @@ function Analytics() {
     const trends: SpendingTrend[] = [];
     let cumulativeBalance = 0;
 
-    for (let i = months - 1; i >= 0; i--) {
-      const monthStart = startOfMonth(subMonths(now, i));
-      const monthEnd = endOfMonth(subMonths(now, i));
+    // Determine number of months to iterate based on time range
+    const monthsToShow = timeRange === "lm" ? 1 : 
+      timeRange === "1m" ? 1 :
+      timeRange === "3m" ? 3 :
+      timeRange === "6m" ? 6 :
+      timeRange === "1y" ? 12 :
+      timeRange === "2y" ? 24 : 36;
+
+    for (let i = monthsToShow - 1; i >= 0; i--) {
+      const monthStart = timeRange === "lm" 
+        ? startOfMonth(subMonths(now, 1))
+        : startOfMonth(subMonths(now, i));
+      const monthEnd = timeRange === "lm"
+        ? endOfMonth(subMonths(now, 1))
+        : endOfMonth(subMonths(now, i));
 
       const monthTransactions = filteredTransactions.filter((t) =>
         isWithinInterval(parseLocalDate(t.date), {
@@ -206,9 +235,13 @@ function Analytics() {
       .forEach((t) => allCategories.add(t.category));
 
     // Calculate spending by category for each month
-    for (let i = months - 1; i >= 0; i--) {
-      const monthStart = startOfMonth(subMonths(now, i));
-      const monthEnd = endOfMonth(subMonths(now, i));
+    for (let i = monthsToShow - 1; i >= 0; i--) {
+      const monthStart = timeRange === "lm"
+        ? startOfMonth(subMonths(now, 1))
+        : startOfMonth(subMonths(now, i));
+      const monthEnd = timeRange === "lm"
+        ? endOfMonth(subMonths(now, 1))
+        : endOfMonth(subMonths(now, i));
 
       const monthTransactions = filteredTransactions.filter(
         (t) =>
@@ -284,7 +317,7 @@ function Analytics() {
       });
 
       // Add future projections
-      for (let i = 1; i <= months; i++) {
+      for (let i = 1; i <= monthsToShow; i++) {
         const futureDate = format(subMonths(now, -i), "MMM yyyy");
         projectedCumulativeBalance += avgBalance; // Accumulate net balance - this shows the financial trajectory!
 
@@ -314,6 +347,24 @@ function Analytics() {
 
   // Wrapper functions for chart formatters
   const formatCurrencyForChart = (value: number) => formatCurrency(value);
+
+  // Handle category selection
+  const handleCategoryClick = (categoryName: string) => {
+    if (selectedCategory === categoryName) {
+      setSelectedCategory(null); // Deselect if clicking the same category
+    } else {
+      setSelectedCategory(categoryName);
+    }
+  };
+
+  // Get transactions for selected category, sorted by amount (largest to smallest)
+  const selectedCategoryTransactions = selectedCategory
+    ? transactions
+        .filter(
+          (t) => t.type === "expense" && t.category === selectedCategory,
+        )
+        .sort((a, b) => b.amount - a.amount)
+    : [];
 
   const totalExpenses = categorySpending.reduce(
     (sum, cat) => sum + cat.amount,
@@ -348,15 +399,19 @@ function Analytics() {
               }`}
               onClick={() => setTimeRange(range)}
             >
-              {range === "3m"
-                ? "3 Months"
-                : range === "6m"
-                  ? "6 Months"
-                  : range === "1y"
-                    ? "1 Year"
-                    : range === "2y"
-                      ? "2 Years"
-                      : "3 Years"}
+              {range === "1m"
+                ? "Current Month"
+                : range === "lm"
+                  ? "Last Month"
+                  : range === "3m"
+                    ? "3 Months"
+                    : range === "6m"
+                      ? "6 Months"
+                      : range === "1y"
+                        ? "1 Year"
+                        : range === "2y"
+                          ? "2 Years"
+                          : "3 Years"}
             </button>
           ))}
         </div>
@@ -529,15 +584,19 @@ function Analytics() {
             <div className="projection-summary">
               <h4 className="projection-title">
                 Projected Totals (
-                {timeRange === "3m"
-                  ? "Next 3 Months"
-                  : timeRange === "6m"
-                    ? "Next 6 Months"
-                    : timeRange === "1y"
-                      ? "Next Year"
-                      : timeRange === "2y"
-                        ? "Next 2 Years"
-                        : "Next 3 Years"}
+                {timeRange === "1m"
+                  ? "Next Month"
+                  : timeRange === "lm"
+                    ? "Next Month"
+                    : timeRange === "3m"
+                      ? "Next 3 Months"
+                      : timeRange === "6m"
+                        ? "Next 6 Months"
+                        : timeRange === "1y"
+                          ? "Next Year"
+                          : timeRange === "2y"
+                            ? "Next 2 Years"
+                            : "Next 3 Years"}
                 )
               </h4>
               <div className="projection-stats">
@@ -636,9 +695,9 @@ function Analytics() {
         </div>
       )}
 
-      <div className="charts-grid">
+      <div className="charts-grid category-section">
         {/* Combined Category Chart with Toggle */}
-        <div className="card">
+        <div className="card category-chart-card">
           <div className="card-header">
             <h3 className="card-title">Spending by Category</h3>
             <div className="chart-toggle">
@@ -670,7 +729,8 @@ function Analytics() {
                   Category spending chart showing {categorySpending.length}{" "}
                   categories.
                   {chartType === "pie" ? "Pie chart" : "Bar chart"} displaying
-                  spending amounts and percentages.
+                  spending amounts and percentages. Click on a category to see
+                  detailed transactions.
                 </div>
                 <ResponsiveContainer
                   width="100%"
@@ -688,9 +748,20 @@ function Analytics() {
                         outerRadius={100}
                         dataKey="value"
                         nameKey="category"
+                        onClick={(data) => handleCategoryClick(data.category)}
+                        style={{ cursor: "pointer" }}
                       >
                         {categorySpending.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={entry.color}
+                            opacity={
+                              selectedCategory === null ||
+                              selectedCategory === entry.category
+                                ? 1
+                                : 0.3
+                            }
+                          />
                         ))}
                       </Pie>
                       <Tooltip
@@ -701,6 +772,11 @@ function Analytics() {
                     <BarChart
                       data={categorySpending}
                       margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                      onClick={(data) => {
+                        if (data && data.activeLabel) {
+                          handleCategoryClick(data.activeLabel);
+                        }
+                      }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis
@@ -716,9 +792,18 @@ function Analytics() {
                         formatter={(value: number) => formatCurrency(value)}
                         labelFormatter={(label) => `Category: ${label}`}
                       />
-                      <Bar dataKey="amount" name="Amount">
+                      <Bar dataKey="amount" name="Amount" style={{ cursor: "pointer" }}>
                         {categorySpending.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={entry.color}
+                            opacity={
+                              selectedCategory === null ||
+                              selectedCategory === entry.category
+                                ? 1
+                                : 0.3
+                            }
+                          />
                         ))}
                       </Bar>
                     </BarChart>
@@ -749,10 +834,15 @@ function Analytics() {
                 </tbody>
               </table>
 
-              {/* Category Legend - only show for pie chart */}
+              {/* Category Legend - clickable */}
               <div className="category-legend">
                 {categorySpending.map((category) => (
-                  <div key={category.category} className="legend-item">
+                  <div
+                    key={category.category}
+                    className={`legend-item ${selectedCategory === category.category ? "selected" : ""}`}
+                    onClick={() => handleCategoryClick(category.category)}
+                    style={{ cursor: "pointer" }}
+                  >
                     <div
                       className="legend-color"
                       style={{ backgroundColor: category.color }}
@@ -775,6 +865,47 @@ function Analytics() {
             </div>
           )}
         </div>
+
+        {/* Transaction List for Selected Category */}
+        {selectedCategory && selectedCategoryTransactions.length > 0 && (
+          <div className="card category-transactions-card">
+            <div className="card-header">
+              <h3 className="card-title">
+                {selectedCategory} Transactions
+              </h3>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => setSelectedCategory(null)}
+              >
+                ✕ Close
+              </button>
+            </div>
+            <div className="transaction-list">
+              {selectedCategoryTransactions.map((transaction) => (
+                <div key={transaction.id} className="transaction-item">
+                  <div className="transaction-date">
+                    {format(parseLocalDate(transaction.date), "MMM dd, yyyy")}
+                  </div>
+                  <div className="transaction-description">
+                    {transaction.description}
+                  </div>
+                  <div className="transaction-amount expense">
+                    {formatCurrency(transaction.amount)}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="transaction-list-summary">
+              <strong>Total:</strong> {formatCurrency(
+                selectedCategoryTransactions.reduce(
+                  (sum, t) => sum + t.amount,
+                  0,
+                )
+              )}{" "}
+              ({selectedCategoryTransactions.length} transactions)
+            </div>
+          </div>
+        )}
       </div>
 
       {transactions.length === 0 && (
