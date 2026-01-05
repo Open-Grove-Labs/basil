@@ -103,23 +103,25 @@ function Analytics() {
     let startDate: Date;
     let endDate: Date = now;
     
-    if (timeRange === "lm") {
+    if (timeRange === "1m") {
+      // Current month: from first day of current month to now
+      startDate = startOfMonth(now);
+      endDate = now;
+    } else if (timeRange === "lm") {
       // Last month: from first day of last month to last day of last month
       startDate = startOfMonth(subMonths(now, 1));
       endDate = endOfMonth(subMonths(now, 1));
     } else {
       const months =
-        timeRange === "1m"
-          ? 1
-          : timeRange === "3m"
-            ? 3
-            : timeRange === "6m"
-              ? 6
-              : timeRange === "1y"
-                ? 12
-                : timeRange === "2y"
-                  ? 24
-                  : 36; // 3y
+        timeRange === "3m"
+          ? 3
+          : timeRange === "6m"
+            ? 6
+            : timeRange === "1y"
+              ? 12
+              : timeRange === "2y"
+                ? 24
+                : 36; // 3y
       startDate = subMonths(now, months);
     }
 
@@ -184,12 +186,16 @@ function Analytics() {
       timeRange === "2y" ? 24 : 36;
 
     for (let i = monthsToShow - 1; i >= 0; i--) {
-      const monthStart = timeRange === "lm" 
-        ? startOfMonth(subMonths(now, 1))
-        : startOfMonth(subMonths(now, i));
-      const monthEnd = timeRange === "lm"
-        ? endOfMonth(subMonths(now, 1))
-        : endOfMonth(subMonths(now, i));
+      const monthStart = timeRange === "1m"
+        ? startOfMonth(now)
+        : timeRange === "lm" 
+          ? startOfMonth(subMonths(now, 1))
+          : startOfMonth(subMonths(now, i));
+      const monthEnd = timeRange === "1m"
+        ? now
+        : timeRange === "lm"
+          ? endOfMonth(subMonths(now, 1))
+          : endOfMonth(subMonths(now, i));
 
       const monthTransactions = filteredTransactions.filter((t) =>
         isWithinInterval(parseLocalDate(t.date), {
@@ -236,12 +242,16 @@ function Analytics() {
 
     // Calculate spending by category for each month
     for (let i = monthsToShow - 1; i >= 0; i--) {
-      const monthStart = timeRange === "lm"
-        ? startOfMonth(subMonths(now, 1))
-        : startOfMonth(subMonths(now, i));
-      const monthEnd = timeRange === "lm"
-        ? endOfMonth(subMonths(now, 1))
-        : endOfMonth(subMonths(now, i));
+      const monthStart = timeRange === "1m"
+        ? startOfMonth(now)
+        : timeRange === "lm"
+          ? startOfMonth(subMonths(now, 1))
+          : startOfMonth(subMonths(now, i));
+      const monthEnd = timeRange === "1m"
+        ? now
+        : timeRange === "lm"
+          ? endOfMonth(subMonths(now, 1))
+          : endOfMonth(subMonths(now, i));
 
       const monthTransactions = filteredTransactions.filter(
         (t) =>
